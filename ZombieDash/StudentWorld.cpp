@@ -23,7 +23,7 @@ StudentWorld::~StudentWorld()
 
 int StudentWorld::init()
 {
-    Actor* p = new Penelope(100, 200);
+    Actor* p = new Penelope(100, 200, this);
     m_actors.push_back(p);
     
     Actor* w = new Wall(100, 200);
