@@ -48,5 +48,3 @@ void StudentWorld::cleanUp()
         it = m_actors.erase(it);
     }
 }
-
-//yes
