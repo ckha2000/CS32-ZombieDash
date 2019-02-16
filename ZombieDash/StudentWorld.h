@@ -2,6 +2,7 @@
 #define STUDENTWORLD_H_
 
 #include "GameWorld.h"
+#include "Level.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -22,6 +23,7 @@ public:
     
 private:
     std::vector<Actor*> m_actors;             // map to a vector of Actor pointers
+    Level m_level;
 };
 
 #endif // STUDENTWORLD_H_
