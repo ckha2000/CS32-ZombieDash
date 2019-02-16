@@ -48,3 +48,9 @@ void StudentWorld::cleanUp()
         it = m_actors.erase(it);
     }
 }
+
+bool StudentWorld::validDestination(int destX, int destY){
+    
+    
+    return true;
+}

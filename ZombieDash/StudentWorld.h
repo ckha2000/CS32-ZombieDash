@@ -18,6 +18,8 @@ public:
     virtual int move();
     virtual void cleanUp();
 
+    bool validDestination(int destX, int destY);        // checks if location is valid - not blocked by a Wall
+    
 private:
     std::vector<Actor*> m_actors;             // map to a vector of Actor pointers
 };

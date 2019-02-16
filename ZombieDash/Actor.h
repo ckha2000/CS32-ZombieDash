@@ -16,6 +16,9 @@ public:
     
     virtual ~Actor(){};
     virtual void doSomething() = 0;
+    
+    
+    
 //    virtual bool isLiving() = 0;
 };
 
