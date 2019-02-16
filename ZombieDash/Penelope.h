@@ -14,8 +14,8 @@
 
 class Penelope: public Actor{
 public:
-    Penelope()
-        :Actor(IID_PLAYER, 200, 100, 1, 0, 1.0)
+    Penelope(int startX, int startY)
+        :Actor(IID_PLAYER, startX, startY, 1, 0, 1.0)
     {}
     
     virtual ~Penelope();

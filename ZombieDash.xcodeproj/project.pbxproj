@@ -13,7 +13,6 @@
 		4B91F8C22033F3F8003AFA78 /* Actor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B62033F3F7003AFA78 /* Actor.cpp */; };
 		4B91F8C32033F3F8003AFA78 /* GameController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4B91F8B82033F3F7003AFA78 /* GameController.cpp */; };
 		4B91F8C62034176C003AFA78 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B91F8C52034176C003AFA78 /* OpenGL.framework */; };
-		E82462D62217AA39009C1638 /* Penelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E82462D42217AA39009C1638 /* Penelope.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -45,8 +44,6 @@
 		4B91F8BE2033F3F8003AFA78 /* StudentWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StudentWorld.h; sourceTree = "<group>"; };
 		4B91F8C52034176C003AFA78 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		4B91F8C720341775003AFA78 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
-		E82462D42217AA39009C1638 /* Penelope.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Penelope.cpp; sourceTree = "<group>"; };
-		E82462D52217AA39009C1638 /* Penelope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Penelope.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,10 +78,8 @@
 		4B91F8A72033F260003AFA78 /* ZombieDash */ = {
 			isa = PBXGroup;
 			children = (
-				4B91F8B62033F3F7003AFA78 /* Actor.cpp */,
 				4B91F8B02033F3F7003AFA78 /* Actor.h */,
-				E82462D42217AA39009C1638 /* Penelope.cpp */,
-				E82462D52217AA39009C1638 /* Penelope.h */,
+				4B91F8B62033F3F7003AFA78 /* Actor.cpp */,
 				4B91F8B22033F3F7003AFA78 /* StudentWorld.cpp */,
 				4B91F8BE2033F3F8003AFA78 /* StudentWorld.h */,
 				4B91F8B42033F3F7003AFA78 /* main.cpp */,
@@ -169,7 +164,6 @@
 				4B91F8C32033F3F8003AFA78 /* GameController.cpp in Sources */,
 				4B91F8C02033F3F8003AFA78 /* StudentWorld.cpp in Sources */,
 				4B91F8BF2033F3F8003AFA78 /* GameWorld.cpp in Sources */,
-				E82462D62217AA39009C1638 /* Penelope.cpp in Sources */,
 				4B91F8C12033F3F8003AFA78 /* main.cpp in Sources */,
 				4B91F8C22033F3F8003AFA78 /* Actor.cpp in Sources */,
 			);

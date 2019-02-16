@@ -4,7 +4,6 @@
 using namespace std;
 
 #include "Actor.h"
-#include "Penelope.h"
 
 GameWorld* createStudentWorld(string assetPath)
 {
@@ -15,26 +14,26 @@ GameWorld* createStudentWorld(string assetPath)
 
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
-{
-}
+{}
 
-StudentWorld::~StudentWorld(){
+StudentWorld::~StudentWorld()
+{
     cleanUp();
 }
 
 int StudentWorld::init()
 {
-    Actor* p = new Penelope();
+    Actor* p = new Penelope(100, 200);
     m_actors.push_back(p);
+    
+    Actor* w = new Wall(100, 200);
+    m_actors.push_back(w);
     
     return GWSTATUS_CONTINUE_GAME;
 }
 
 int StudentWorld::move()
 {
-    // This code is here merely to allow the game to build, run, and terminate after you hit enter.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-    
     vector<Actor*>::iterator it = m_actors.begin();
     (*it)->doSomething();
 
@@ -43,5 +42,10 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+    vector<Actor*>::iterator it = m_actors.begin();
+    while(it != m_actors.end()){
+        delete (*it);
+        it = m_actors.erase(it);
+    }
 }
 
