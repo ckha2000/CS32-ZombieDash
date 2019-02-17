@@ -20,6 +20,7 @@ public:
     
     void setIsAlive(bool isAlive){ m_isAlive = isAlive; }
     bool getIsAlive(){ return m_isAlive; }
+    
 
 private:
     bool m_isAlive = true;

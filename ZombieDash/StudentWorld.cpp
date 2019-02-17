@@ -2,6 +2,7 @@
 #include "GameConstants.h"
 #include <string>
 #include <sstream>
+#include <cmath>
 using namespace std;
 
 #include "Actor.h"
@@ -53,6 +54,10 @@ int StudentWorld::init()
                 }
             }
         }
+//        validDestination(0, 0);
+//        validDestination(16, 16);
+//        validDestination(112, 224);
+        
     }
     
     return GWSTATUS_CONTINUE_GAME;
@@ -81,9 +86,24 @@ void StudentWorld::cleanUp()
     delete m_penelope;
 }
 
-bool StudentWorld::validDestination(int destX, int destY){  
+bool StudentWorld::validDestination(int destX, int destY){  // only call after level has been set
     
-    
-    
+    vector<Actor*>::iterator it = m_actors.begin();
+    while(it != m_actors.end()){
+        if(!(*it)->isPassable()){
+            Actor* curr = *it;
+            int currX = curr->getX();
+            int currY = curr->getY();
+            
+//            int yDistance = SPRITE_HEIGHT;
+//            int xDistance = SPRITE_WIDTH;
+            
+            if( (abs(destX - currX) < SPRITE_WIDTH) && (abs(destY - currY) < SPRITE_HEIGHT) ){
+                return false;
+            }
+        }
+        it++;
+    }
     return true;
 }
+

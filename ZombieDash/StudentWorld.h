@@ -21,6 +21,7 @@ public:
 
     bool validDestination(int destX, int destY);       // checks if location is valid -> not blocked by a Wall/person
     
+    
 private:
     std::vector<Actor*> m_actors;             // map to a vector of Actor pointers
     Actor* m_penelope;
