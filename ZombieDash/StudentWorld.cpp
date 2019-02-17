@@ -37,24 +37,31 @@ int StudentWorld::init()
     }else if(lev == Level::load_success){
         cerr << "Successfully loaded level" << endl;
         
-        
+        Level::MazeEntry entry;
+        for(int level_x = 0; level_x < LEVEL_WIDTH; level_x++){
+            for(int level_y = 0; level_y < LEVEL_HEIGHT; level_y++){
+                entry = m_level.getContentsOf(level_x, level_y);
+                
+                switch(entry){
+                    case Level::player:
+                        m_penelope = new Penelope(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        break;
+                    case Level::wall:
+                        Actor* w = new Wall(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT);
+                        m_actors.push_back(w);
+                        break;
+                }
+            }
+        }
     }
-    
-    Actor* p = new Penelope(100, 200, this);
-    m_actors.push_back(p);
-    
-    Actor* w = new Wall(100, 200);
-    m_actors.push_back(w);
-    
-    
-    
-    
     
     return GWSTATUS_CONTINUE_GAME;
 }
 
 int StudentWorld::move()
 {
+    m_penelope->doSomething();
+    
     vector<Actor*>::iterator it = m_actors.begin();
     while(it != m_actors.end()){
         (*it)->doSomething();
@@ -71,8 +78,12 @@ void StudentWorld::cleanUp()
         delete (*it);
         it = m_actors.erase(it);
     }
+    delete m_penelope;
 }
 
-bool StudentWorld::validDestination(int destX, int destY){
+bool StudentWorld::validDestination(int destX, int destY){  
+    
+    
+    
     return true;
 }

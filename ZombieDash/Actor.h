@@ -16,18 +16,23 @@ public:
     
     virtual ~Actor(){};
     virtual void doSomething() = 0;
+    virtual bool isPassable() {return false;}      // returns whether object can be overlapped/touched
     
-    
-    
-//    virtual bool isLiving() = 0;
+    void setIsAlive(bool isAlive){ m_isAlive = isAlive; }
+    bool getIsAlive(){ return m_isAlive; }
+
+private:
+    bool m_isAlive = true;
 };
 
-// Wall class
+    // Wall class
 class Wall: public Actor{
 public:
     Wall(double startX, double startY)
     :Actor(IID_WALL, startX, startY) {}
-    virtual void doSomething(){}
+    virtual void doSomething(){}                    // Wall class does nothing
+    
+    virtual bool isLiving(){return false;}
 };
 
     // Penelope class
@@ -36,7 +41,6 @@ public:
     Penelope(double startX, double startY, StudentWorld* w)
     :Actor(IID_PLAYER, startX, startY)
     {
-        m_isAlive = true;
         m_isInfected = false;
         m_nLandmines = m_nFlames = m_nVaccines = 0;
         m_world = w;
@@ -44,7 +48,6 @@ public:
     virtual void doSomething();
     
 private:
-    bool m_isAlive;
     bool m_isInfected;
     int m_nLandmines;
     int m_nFlames;
