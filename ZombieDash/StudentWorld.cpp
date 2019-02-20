@@ -25,19 +25,18 @@ StudentWorld::~StudentWorld()
 }
 
 int StudentWorld::init()
-{
-    ostringstream levNum;
-    levNum.fill('0');
-    levNum << setw(2) << getLevel();
-    
+{    
     ostringstream s;
-    s << "level" << levNum.str() << ".txt";
+    s << "level";
+    s.fill('0');
+    s << setw(2) << getLevel();
+    s << ".txt";
     string levelTxt = s.str();
     
-//    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
+    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
     
     ////////////////////////////////
-    Level::LoadResult lev = m_level.loadLevel("level06.txt");
+//    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
     
     if(lev == Level::load_fail_file_not_found){
         cerr << "Cannot find level data file" << endl;
@@ -66,6 +65,10 @@ int StudentWorld::init()
                         a = new Exit(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
                         m_actors.push_back(a);
                         break;
+                    case Level::citizen:
+                        a = new Citizen(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
                 }
             }
         }
@@ -75,21 +78,21 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    m_penelope->doSomething();
+    m_penelope->doSomething();              // Penelope moves first
     
     vector<Actor*>::iterator it = m_actors.begin();
-    while(it != m_actors.end()){
+    while(it != m_actors.end()){            // the rest of the Actors move
         (*it)->doSomething();
         it++;
         
-        if(m_penelope->hasExited())
+        if(m_penelope->hasExited())         // if Penelope completes the level at any point, let world know
             return GWSTATUS_FINISHED_LEVEL;
         
-        if(!m_penelope->getIsAlive())
+        if(!m_penelope->getIsAlive())       // if Penelope dies at any point, let world know
             return GWSTATUS_PLAYER_DIED;
     }
     
-    updateDisplayMessage();
+    updateDisplayMessage();                 // update status message
     
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -104,10 +107,24 @@ void StudentWorld::cleanUp()
     delete m_penelope;
 }
 
-bool StudentWorld::validDestination(int destX, int destY){  // only call after level has been set
+bool StudentWorld::validDestination(int destX, int destY, Actor* a){  // only call after level has been set
+    if(m_penelope != a){                                       // "a" is the actor that is moving
+        int currX = m_penelope->getX();                        // citizens and zombies must check for Penelope
+        int currY = m_penelope->getY();
+        
+        if( (abs(destX - currX) < SPRITE_WIDTH) && (abs(destY - currY) < SPRITE_HEIGHT) ){
+            return false;
+        }
+    }
+    
+    // check other Actors
     vector<Actor*>::iterator it = m_actors.begin();
     while(it != m_actors.end()){
-        if((*it)->getIsAlive() && !(*it)->isPassable()){           // possible error: make sure that the current moving Actor is not "it"
+        if((*it) == a){         // make sure that the current moving actor doesn't block itself
+            it++;
+            continue;
+        }
+        if((*it)->getIsAlive() && !(*it)->isPassable()){
             Actor* curr = *it;
             int currX = curr->getX();
             int currY = curr->getY();
@@ -118,7 +135,7 @@ bool StudentWorld::validDestination(int destX, int destY){  // only call after l
         }
         it++;
     }
-    return true;
+    return true; 
 }
 
 void StudentWorld::updateDisplayMessage(){
@@ -139,12 +156,17 @@ void StudentWorld::updateDisplayMessage(){
 bool StudentWorld::exitOverlap(double exitX, double exitY){
     saveOverlappingCitizens(exitX, exitY);
     
-    if(isOverlapping(exitX, exitY, m_penelope->getX(), m_penelope->getY())){    // need to check if no citizens left
-        // tell world that level is completed
-        
-        playSound(SOUND_LEVEL_FINISHED);
+    if(isOverlapping(exitX, exitY, m_penelope->getX(), m_penelope->getY())){
+        // need to check if no citizens left, tell world that level is completed
+        vector<Actor*>::iterator it = m_actors.begin();
+        while(it != m_actors.end()){
+            if((*it)->isSavable()){             // if there is a savable citizen left, the level is not over
+                return false;
+            }
+            it++;
+        }
+        playSound(SOUND_LEVEL_FINISHED);        // if there are no savable citizens left, finish level
         m_penelope->exit();
-        
         return true;
     }
     return false;
@@ -163,7 +185,7 @@ void StudentWorld::saveOverlappingCitizens(double exitX, double exitY){
     }
 }
 
-bool StudentWorld::isOverlapping(int x1, int y1, int x2, int y2){
+bool StudentWorld::isOverlapping(int x1, int y1, int x2, int y2) const{
     double xDis = x1 - x2;
     double yDis = y1 - y2;
     

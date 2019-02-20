@@ -14,25 +14,25 @@ void Penelope::doSomething(){
         switch(input){                  // decides what to do depending on input
             case KEY_PRESS_UP:
                 setDirection(up);
-                if(getWorld()->validDestination(getX(), getY()+4)){     // checks if destination is blocked
+                if(getWorld()->validDestination(getX(), getY()+4, this)){    // checks if destination is blocked
                     moveTo(getX(), getY()+4);
                 }
                 break;
             case KEY_PRESS_DOWN:
                 setDirection(down);
-                if(getWorld()->validDestination(getX(), getY()-4)){
+                if(getWorld()->validDestination(getX(), getY()-4, this)){
                     moveTo(getX(), getY()-4);
                 }
                 break;
             case KEY_PRESS_LEFT:
                 setDirection(left);
-                if(getWorld()->validDestination(getX()-4, getY())){
+                if(getWorld()->validDestination(getX()-4, getY(), this)){
                     moveTo(getX()-4, getY());
                 }
                 break;
             case KEY_PRESS_RIGHT:
                 setDirection(right);
-                if(getWorld()->validDestination(getX()+4, getY())){
+                if(getWorld()->validDestination(getX()+4, getY(), this)){
                     moveTo(getX()+4, getY());
                 }
                 break;

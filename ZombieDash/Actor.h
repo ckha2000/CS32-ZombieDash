@@ -19,22 +19,20 @@ public:
     virtual ~Actor(){};
     virtual void doSomething() = 0;
     
-    virtual bool isPassable() {return true;}            // returns whether object can be overlapped/touched
-    virtual bool isDamagable() {return true;}           // everything but flames, exits and pitfalls can be damaged
-    virtual bool isInfectable() {return false;}         // only Penelope and citizens can be Infected
-    virtual bool isSavable() {return false;}            // only citizens can be saved
+    virtual bool isPassable() const {return true;}      // returns whether object can be overlapped/touched
+    virtual bool isDamagable() const {return true;}     // everything but flames, exits and pitfalls can be damaged
+    virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
+    virtual bool isSavable() const {return false;}      // only citizens can be saved
     
 //    virtual void getDamaged(){}         // maybe later
     
     void setIsAlive(bool isAlive){ m_isAlive = isAlive; }
-    bool getIsAlive(){ return m_isAlive; }
+    bool getIsAlive() const {return m_isAlive; }
     
     virtual void setInfected(bool inf){}                // for People only
-    virtual bool isInfected(){ return false;}           // only use if Infectable
+    virtual bool isInfected() const {return false;}           // only use if Infectable
     
-    virtual void getSaved(){}                           // use for Citizens taht overlap with exit
-    
-    StudentWorld* getWorld(){ return m_world;}
+    StudentWorld* getWorld() const {return m_world;}
 
 private:
     bool m_isAlive = true;
@@ -48,8 +46,8 @@ public:
     :Actor(IID_WALL, startX, startY, w) {}
     virtual void doSomething(){}                    // Wall class does nothing
     
-    virtual bool isPassable() {return false;}
-    virtual bool isDamagable(){return false;}
+    virtual bool isPassable() const {return false;}
+    virtual bool isDamagable() const {return false;}
 };
 
 class Person: public Actor{             // Citizens and Zombies
@@ -60,13 +58,13 @@ public:
         m_infectCount = 0;
     }
     
-    virtual bool isPassable() {return false;}       // false for all People
-    virtual bool isInfectable() {return true;}
+    virtual bool isPassable() const {return false;}       // false for all People
+    virtual bool isInfectable() const {return true;}
     
     // mutators and accessors
     virtual void setInfected(bool inf){ m_isInfected = inf;}
-    virtual bool isInfected(){ return m_isInfected;}
-    int getInfectCount(){return m_infectCount;}
+    virtual bool isInfected() const { return m_isInfected;}
+    int getInfectCount() const {return m_infectCount;}
     
 private:
     bool m_isInfected = false;
@@ -78,7 +76,9 @@ public:
     Citizen(double startX, double startY, StudentWorld* w)
     :Person(IID_CITIZEN, startX, startY, w){}
     
-    virtual void doSomething();
+    virtual void doSomething(){}
+
+    virtual bool isSavable() const { return true;}
 };
 
     // Penelope class
@@ -92,11 +92,11 @@ public:
     }
     virtual void doSomething();
     
-    int getLandmines(){return m_nLandmines;}        // accessors
-    int getFlames(){return m_nFlames;}
-    int getVaccines(){return m_nVaccines;}
+    int getLandmines() const {return m_nLandmines;}        // accessors
+    int getFlames() const {return m_nFlames;}
+    int getVaccines() const {return m_nVaccines;}
     
-    bool hasExited(){return m_exited;}
+    bool hasExited() const {return m_exited;}
     void exit(){m_exited = true;}
     
 private:
@@ -114,7 +114,7 @@ public:
     :Actor(IID_EXIT, startX, startY, w, right, 1) {}
     virtual void doSomething();
     
-    virtual bool isDamagable(){return false;}
+    virtual bool isDamagable() const {return false;}
     
 };
 

@@ -20,7 +20,7 @@ public:
     virtual int move();
     virtual void cleanUp();
 
-    bool validDestination(int destX, int destY);       // checks if location is valid -> not blocked by a Wall/person
+    bool validDestination(int destX, int destY, Actor* a);       // checks if location is valid -> not blocked by a Wall/person
     void updateDisplayMessage();
     
     bool exitOverlap(double exitX, double exitY);             // handles exit's overlap with citizens and penelope
@@ -32,7 +32,7 @@ private:
     Level m_level;
     
     void saveOverlappingCitizens(double exitX, double exitY);            // exit overlapping with citizen
-    bool isOverlapping(int x1, int y1, int x2, int y2);
+    bool isOverlapping(int x1, int y1, int x2, int y2) const;
 };
 
 #endif // STUDENTWORLD_H_
