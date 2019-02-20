@@ -5,34 +5,41 @@
 
 
 void Penelope::doSomething(){
-    int input = 0;
+    if(!getIsAlive()){
+        return;
+    }
     
-    if(m_world->getKey(input)){
-        switch(input){
+    int input = 0;
+    if(getWorld()->getKey(input)){
+        switch(input){                  // decides what to do depending on input
             case KEY_PRESS_UP:
                 setDirection(up);
-                if(m_world->validDestination(getX(), getY()+4)){
+                if(getWorld()->validDestination(getX(), getY()+4)){     // checks if destination is blocked
                     moveTo(getX(), getY()+4);
                 }
                 break;
             case KEY_PRESS_DOWN:
                 setDirection(down);
-                if(m_world->validDestination(getX(), getY()-4)){
+                if(getWorld()->validDestination(getX(), getY()-4)){
                     moveTo(getX(), getY()-4);
                 }
                 break;
             case KEY_PRESS_LEFT:
                 setDirection(left);
-                if(m_world->validDestination(getX()-4, getY())){
+                if(getWorld()->validDestination(getX()-4, getY())){
                     moveTo(getX()-4, getY());
                 }
                 break;
             case KEY_PRESS_RIGHT:
                 setDirection(right);
-                if(m_world->validDestination(getX()+4, getY())){
+                if(getWorld()->validDestination(getX()+4, getY())){
                     moveTo(getX()+4, getY());
                 }
                 break;
         }
     }
+}
+
+void Exit::doSomething(){
+    getWorld()->exitOverlap(getX(), getY());
 }
