@@ -43,3 +43,23 @@ void Penelope::doSomething(){
 void Exit::doSomething(){
     getWorld()->exitOverlap(getX(), getY());
 }
+
+void Citizen::doSomething(){
+    if(!getIsAlive())       // return immediately if not alive
+        return;
+    
+    if(isInfected()){
+        if(incrementInfection()){
+            setIsAlive(false);
+            
+            // killCitizen() function
+//            getWorld()->killCitizen(getX(), getX());
+            return;
+        }
+    }
+    
+    
+    
+    
+    
+}

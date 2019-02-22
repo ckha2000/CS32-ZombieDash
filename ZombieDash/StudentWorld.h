@@ -21,9 +21,9 @@ public:
     virtual void cleanUp();
 
     bool validDestination(int destX, int destY, Actor* a);       // checks if location is valid -> not blocked by a Wall/person
-    void updateDisplayMessage();
     
     bool exitOverlap(double exitX, double exitY);             // handles exit's overlap with citizens and penelope
+//    void killCitizen(double locX, double locY);         // deletes the citizen at that location and adds a new Zombie
     
 
 private:
@@ -33,6 +33,7 @@ private:
     
     void saveOverlappingCitizens(double exitX, double exitY);            // exit overlapping with citizen
     bool isOverlapping(int x1, int y1, int x2, int y2) const;
+    void updateDisplayMessage();
 };
 
 #endif // STUDENTWORLD_H_

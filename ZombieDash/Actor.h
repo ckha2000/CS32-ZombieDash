@@ -13,6 +13,7 @@ public:
     Actor(int imageID, double startX, double startY, StudentWorld* w, Direction dir = right, int depth = 0)
     :GraphObject(imageID, startX, startY, dir, depth)
     {
+        m_isAlive = true;
         m_world = w;
     }
     
@@ -35,7 +36,7 @@ public:
     StudentWorld* getWorld() const {return m_world;}
 
 private:
-    bool m_isAlive = true;
+    bool m_isAlive;
     StudentWorld* m_world;
 };
 
@@ -64,7 +65,12 @@ public:
     // mutators and accessors
     virtual void setInfected(bool inf){ m_isInfected = inf;}
     virtual bool isInfected() const { return m_isInfected;}
+    
     int getInfectCount() const {return m_infectCount;}
+    bool incrementInfection(){                           // return true if infection is 500 (dead)
+        m_infectCount++;
+        return m_infectCount >= 500;
+    }
     
 private:
     bool m_isInfected = false;
@@ -76,7 +82,7 @@ public:
     Citizen(double startX, double startY, StudentWorld* w)
     :Person(IID_CITIZEN, startX, startY, w){}
     
-    virtual void doSomething(){}
+    virtual void doSomething();
 
     virtual bool isSavable() const { return true;}
 };
