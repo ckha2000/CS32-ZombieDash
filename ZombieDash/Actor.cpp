@@ -58,8 +58,13 @@ void Citizen::doSomething(){
         }
     }
     
+    double dist_p = getWorld()->distToPenelope(getX(), getY());
+    double dist_z = getWorld()->distToNearestZombie(getX(), getY());
     
-    
-    
-    
+    if(dist_p < dist_z && dist_p <= 80){
+         getWorld()->moveToPenelope(this);                             // parameters: (pointer to citizen?)
+    }else if(dist_z <= 80){
+//        avoidZombie();
+    }
 }
+

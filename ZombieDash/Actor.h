@@ -24,6 +24,8 @@ public:
     virtual bool isDamagable() const {return true;}     // everything but flames, exits and pitfalls can be damaged
     virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
     virtual bool isSavable() const {return false;}      // only citizens can be saved
+    virtual bool isHostile() const {return false;}      // zombies are hostile
+    
     
 //    virtual void getDamaged(){}         // maybe later
     
@@ -83,7 +85,6 @@ public:
     :Person(IID_CITIZEN, startX, startY, w){}
     
     virtual void doSomething();
-
     virtual bool isSavable() const { return true;}
 };
 
@@ -109,7 +110,6 @@ private:
     int m_nLandmines;
     int m_nFlames;
     int m_nVaccines;
-    
     bool m_exited;
 };
 
@@ -121,7 +121,6 @@ public:
     virtual void doSomething();
     
     virtual bool isDamagable() const {return false;}
-    
 };
 
 

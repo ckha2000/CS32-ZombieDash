@@ -107,12 +107,11 @@ void StudentWorld::cleanUp()
     delete m_penelope;
 }
 
-bool StudentWorld::validDestination(int destX, int destY, Actor* a){  // only call after level has been set
+bool StudentWorld::validDestination(double destX, double destY, Actor* a){  // only call after level has been set
     if(m_penelope != a){                                       // "a" is the actor that is moving
-        int currX = m_penelope->getX();                        // citizens and zombies must check for Penelope
-        int currY = m_penelope->getY();
-        
-        if( (abs(destX - currX) < SPRITE_WIDTH) && (abs(destY - currY) < SPRITE_HEIGHT) ){
+                                                                // citizens and zombies must check for Penelope
+        if( (abs(destX - m_penelope->getX()) < SPRITE_WIDTH) &&
+            (abs(destY - m_penelope->getY()) < SPRITE_HEIGHT) ){
             return false;
         }
     }
@@ -126,10 +125,9 @@ bool StudentWorld::validDestination(int destX, int destY, Actor* a){  // only ca
         }
         if((*it)->getIsAlive() && !(*it)->isPassable()){
             Actor* curr = *it;
-            int currX = curr->getX();
-            int currY = curr->getY();
             
-            if( (abs(destX - currX) < SPRITE_WIDTH) && (abs(destY - currY) < SPRITE_HEIGHT) ){
+            if( (abs(destX - curr->getX()) < SPRITE_WIDTH) &&
+                (abs(destY - curr->getY()) < SPRITE_HEIGHT) ){
                 return false;
             }
         }
@@ -190,5 +188,31 @@ bool StudentWorld::isOverlapping(int x1, int y1, int x2, int y2) const{
     double yDis = y1 - y2;
     
     return (sqrt(xDis*xDis + yDis*yDis) <= 10);
+    
+}
+
+// citizen helper functions
+double StudentWorld::distToNearestZombie(double posX, double posY){
+    return 0;
+}
+
+double StudentWorld::distToPenelope(double posX, double posY){
+    double x = posX - m_penelope->getX();
+    double y = posY - m_penelope->getY();
+    return sqrt(x*x + y*y);
+}
+
+void StudentWorld::moveToPenelope(Actor* a){
+    double citX = a->getX();
+    double citY = a->getY();
+    double pX = m_penelope->getX();
+    double pY = m_penelope->getY();
+    
+    if(citX == pX){
+//        if(citX < )
+        
+    }
+    
+    
     
 }
