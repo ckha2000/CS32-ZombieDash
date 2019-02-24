@@ -40,12 +40,27 @@ void Penelope::doSomething(){
     }
 }
 
-void Exit::doSomething(){
-    getWorld()->exitOverlap(getX(), getY());
+void Penelope::useExitIfAppropriate(){
+    if(getWorld()->citizensLeft()){
+        getWorld()->playSound(SOUND_LEVEL_FINISHED);
+        exit();
+    }
+}
+
+void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
+    g->pickup(this);
+}
+
+
+
+void Citizen::useExitIfAppropriate(){
+    getWorld()->increaseScore(500);
+    getWorld()->playSound(SOUND_CITIZEN_SAVED);
+    setIsAlive(false);
 }
 
 void Citizen::doSomething(){
-    if(!getIsAlive())       // return immediately if not alive
+    if(!getIsAlive())           // return immediately if not alive
         return;
     
     if(isInfected()){
@@ -67,5 +82,28 @@ void Citizen::doSomething(){
     if(dist_z <= 80){
 //       avoidZombie();
     }
+}
+
+void Goodie::activateIfAppropriate(Actor *a){
+    if(appropriateType(a)){
+        a->pickUpGoodieIfAppropriate(this);
+    }
+}
+
+void Activator::doSomething(){
+    getWorld()->activateOnAppropriateActors(this);
+}
+
+void Exit::activateIfAppropriate(Actor *a){
+    if(appropriateType(a)){
+        a->useExitIfAppropriate();
+    }
+}
+
+void Goodie::pickup(Penelope *p){
+    incrementSupply(p);
+    getWorld()->increaseScore(50);
+    getWorld()->playSound(SOUND_GOT_GOODIE);
+    setIsAlive(false);
 }
 

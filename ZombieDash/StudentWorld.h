@@ -22,23 +22,22 @@ public:
 
     bool validDestination(double destX, double destY, Actor* a);       // checks if location is valid -> not blocked by a Wall/person
     
-    bool exitOverlap(double exitX, double exitY);             // handles exit's overlap with citizens and penelope
-//    void killCitizen(double locX, double locY);         // deletes the citizen at that location and adds a new Zombie
-    
     // citizen functions
     double distToNearestZombie(double posX, double posY);    // calculates distance to the nearest zombie - citizens
     double distToPenelope(double posX, double posY);         // calculates distance to penelope - citizens/zombies
     void moveToPenelope(Actor* a);
-    void avoidZombie(Actor* a);
+    void avoidZombie(Actor* a){}
     
+    // overlap
+    void activateOnAppropriateActors(Actor* a);            // determines overlap and calls Actor's activate function
+    bool citizensLeft();
     
 private:
     std::vector<Actor*> m_actors;             // map to a vector of Actor pointers
     Penelope* m_penelope;
     Level m_level;
     
-    void saveOverlappingCitizens(double exitX, double exitY);            // exit overlapping with citizen
-    bool isOverlapping(int x1, int y1, int x2, int y2) const;
+    bool isOverlapping(Actor* a, Actor* b) const;
     void updateDisplayMessage();
     
 };

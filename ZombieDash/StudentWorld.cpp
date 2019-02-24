@@ -69,6 +69,18 @@ int StudentWorld::init()
                         a = new Citizen(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
                         m_actors.push_back(a);
                         break;
+                    case Level::gas_can_goodie:
+                        a = new GasCanGoodie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
+                    case Level::landmine_goodie:
+                        a = new LandmineGoodie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
+                    case Level::vaccine_goodie:
+                        a = new VaccineGoodie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
                 }
             }
         }
@@ -124,7 +136,6 @@ bool StudentWorld::validDestination(double destX, double destY, Actor* a){  // o
     }
     
     // check other Actors
-    
     for(int i = 0; i < m_actors.size(); i++){
         if(m_actors[i] == a){         // make sure that the current moving actor doesn't block itself
             continue;
@@ -156,43 +167,33 @@ void StudentWorld::updateDisplayMessage(){
     setGameStatText(msg.str());
 }
 
-bool StudentWorld::exitOverlap(double exitX, double exitY){
-    saveOverlappingCitizens(exitX, exitY);
-    
-    if(isOverlapping(exitX, exitY, m_penelope->getX(), m_penelope->getY())){
-        // need to check if no citizens left, tell world that level is completed
-        
-        for(int i = 0; i < m_actors.size(); i++){
-            if(m_actors[i]->isSavable()){             // if there is a savable citizen left, the level is not over
-                return false;
-            }
-        }
-        playSound(SOUND_LEVEL_FINISHED);        // if there are no savable citizens left, finish level
-        m_penelope->exit();
-        return true;
+void StudentWorld::activateOnAppropriateActors(Actor *a){
+    if(isOverlapping(a, m_penelope)){
+        a->activateIfAppropriate(m_penelope);
     }
-    return false;
-}
-
-
-void StudentWorld::saveOverlappingCitizens(double exitX, double exitY){
-    vector<Actor*>::iterator it;
-    
-    for(it = m_actors.begin(); it != m_actors.end(); it++){
-        if((*it)->isSavable() && isOverlapping(exitX, exitY, (*it)->getX(), (*it)->getY())){
-            increaseScore(500);
-            (*it)->setIsAlive(false);
-            playSound(SOUND_CITIZEN_SAVED);
+    for(int i = 0; i < m_actors.size(); i++){
+        if(isOverlapping(a, m_actors[i])){
+            a->activateIfAppropriate(m_actors[i]);
         }
     }
 }
 
-bool StudentWorld::isOverlapping(int x1, int y1, int x2, int y2) const{
-    double xDis = x1 - x2;
-    double yDis = y1 - y2;
+bool StudentWorld::citizensLeft(){
+    for(int i = 0 ; i < m_actors.size(); i++){
+        if(m_actors[i]->isSavable())
+            return false;
+    }
+    return true;
+}
+
+bool StudentWorld::isOverlapping(Actor* a, Actor* b) const{
+    if(a == b)
+        return false;
+    
+    double xDis = a->getX() - b->getX();
+    double yDis = a->getY() - b->getY();
     
     return (sqrt(xDis*xDis + yDis*yDis) <= 10);
-    
 }
 
 // citizen helper functions
@@ -213,7 +214,6 @@ void StudentWorld::moveToPenelope(Actor* a){
     double pY = m_penelope->getY();
     
     if(citY == pY){
-        cerr << "yes" << endl;
         if(citX > pX){              // move left
             if(validDestination(citX-2, citY, a)){
                 a->moveTo(citX-2, citY);
