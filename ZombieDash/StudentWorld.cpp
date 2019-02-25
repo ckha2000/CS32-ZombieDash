@@ -83,7 +83,16 @@ int StudentWorld::init()
                         a = new Pit(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
                         m_actors.push_back(a);
                         break;
-                        
+                    case Level::dumb_zombie:
+                        a = new DumbZombie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
+                    case Level::smart_zombie:
+                        a = new SmartZombie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
+                    case Level::empty:
+                        break;
                 }
             }
         }

@@ -161,8 +161,6 @@ public:
     SmartZombie(double startX, double startY, StudentWorld* w)
     :Zombie(startX, startY, w, 2000){}
     
-    
-    
 };
 
 
