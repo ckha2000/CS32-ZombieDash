@@ -36,7 +36,63 @@ void Penelope::doSomething(){
                     moveTo(getX()+4, getY());
                 }
                 break;
+            case KEY_PRESS_ENTER:
+                useVaccine();
+                break;
+            case KEY_PRESS_SPACE:
+                useFlamethrower();
+                break;
+            case KEY_PRESS_TAB:
+                dropLandmine();
+                break;
         }
+    }
+}
+
+void Penelope::useVaccine(){
+    if(m_nVaccines > 0 && isInfected()){
+        setInfected(false);
+    }
+    m_nVaccines--;
+}
+
+void Penelope::useFlamethrower(){
+    if(m_nFlames > 0){
+        m_nFlames--;
+        getWorld()->playSound(SOUND_PLAYER_FIRE);
+        
+        Direction d = getDirection();
+        
+        double destX = getX();
+        double destY = getY();
+    
+        for(int i = 0; i < 3; i++){
+            switch (d) {
+                case right:
+                    destX += SPRITE_WIDTH;
+                    break;
+                case left:
+                    destX -= SPRITE_WIDTH;
+                    break;
+                case up:
+                    destY += SPRITE_HEIGHT;
+                    break;
+                case down:
+                    destY -= SPRITE_HEIGHT;
+            }
+            
+            if(getWorld()->validFlameDestination(destX, destY)){
+                getWorld()->addActor(new Flame(destX, destY, getWorld(), d));
+            }else
+                break;
+        }
+    }
+}
+
+void Penelope::dropLandmine(){
+    if(m_nLandmines > 0){
+        m_nLandmines--;
+        getWorld()->addActor(new Landmine(getX(), getY(), getWorld()));
     }
 }
 
@@ -46,12 +102,6 @@ void Penelope::useExitIfAppropriate(){
         exit();
     }
 }
-
-void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
-    g->pickup(this);
-}
-
-
 
 void Citizen::useExitIfAppropriate(){
     getWorld()->increaseScore(500);
@@ -84,26 +134,94 @@ void Citizen::doSomething(){
     }
 }
 
-void Goodie::activateIfAppropriate(Actor *a){
-    if(appropriateType(a)){
-        a->pickUpGoodieIfAppropriate(this);
-    }
-}
-
+// Activator doSomething()'s
 void Activator::doSomething(){
-    getWorld()->activateOnAppropriateActors(this);
-}
-
-void Exit::activateIfAppropriate(Actor *a){
-    if(appropriateType(a)){
-        a->useExitIfAppropriate();
+    if(getIsAlive()){
+        getWorld()->activateOnAppropriateActors(this);
     }
 }
 
-void Goodie::pickup(Penelope *p){
+void Flame::doSomething(){
+    if(m_liveTicks <= 0){
+        setIsAlive(false);
+        return;
+    }
+    Activator::doSomething();
+    m_liveTicks--;
+}
+
+void Landmine::doSomething(){
+    if(m_safetyTics > 0){
+        m_safetyTics--;
+        return;
+    }
+    Activator::doSomething();
+}
+
+void Exit::activateIfAppropriate(Actor* a){
+        a->useExitIfAppropriate();
+}
+
+void Goodie::activateIfAppropriate(Actor* a){
+    if(getIsAlive())
+        a->pickUpGoodieIfAppropriate(this);
+}
+
+void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
+    g->pickup(this);
+}
+
+void Goodie::pickup(Penelope* p){
     incrementSupply(p);
     getWorld()->increaseScore(50);
     getWorld()->playSound(SOUND_GOT_GOODIE);
     setIsAlive(false);
 }
 
+void Landmine::trigger(){
+    
+    
+}
+
+    // hazard activations
+void Pit::activateIfAppropriate(Actor* a){
+    a->dieByFallOrBurnIfAppropriate();
+}
+
+void Flame::activateIfAppropriate(Actor* a){
+    a->dieByFallOrBurnIfAppropriate();
+}
+
+void Landmine::activateIfAppripriate(Actor *a){
+    if(a->triggersActiveLandmines())
+        trigger();
+}
+
+    // dieByFallOrBurnIfAppropriate()
+void Citizen::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+    getWorld()->increaseScore(-1000);
+    getWorld()->playSound(SOUND_CITIZEN_DIE);
+}
+
+void Penelope::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+    getWorld()->decLives();
+    getWorld()->playSound(SOUND_PLAYER_DIE);
+}
+
+void Goodie::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+}
+
+void Landmine::dieByFallOrBurnIfAppropriate(){
+    trigger();
+}
+
+/*
+void Zombie::dieByFallOrBurnIfAppropriate(){
+ setIsAlive(false);
+ getWorld()->increaseScore(m_score);
+ getWorld()->playSound(SOUND_ZOMBIE_DIE);
+}
+*/

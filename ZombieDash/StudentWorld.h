@@ -19,8 +19,14 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
-
+    
+    void addActor(Actor* a){
+        m_actors.push_back(a);
+    }
+    
     bool validDestination(double destX, double destY, Actor* a);       // checks if location is valid -> not blocked by a Wall/person
+    
+    bool validFlameDestination(double destX, double destY);
     
     // citizen functions
     double distToNearestZombie(double posX, double posY);    // calculates distance to the nearest zombie - citizens

@@ -24,7 +24,6 @@ public:
     // object characteristics
     virtual bool isPassable() const {return true;}      // returns whether object blocks movement
     virtual bool blocksFlame() const {return false;}    // returns whether object blocks flames
-    virtual bool isDamagable() const {return true;}     // everything but flames, exits and pitfalls can be damaged
     virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
     virtual bool isSavable() const {return false;}      // only Penelope and citizens can be saved
     virtual bool isHostile() const {return false;}      // zombies are hostile
@@ -44,6 +43,7 @@ public:
     virtual void useExitIfAppropriate(){}               // for people
     virtual void dieByFallOrBurnIfAppropriate(){}       // for people, zombies and goodies (and landmines?)
     virtual void pickUpGoodieIfAppropriate(Goodie* g){} // for penelope
+    virtual bool triggersActiveLandmines() const {return false;}    // for people and zombies
     
 private:
     bool m_isAlive;
@@ -59,7 +59,6 @@ public:
     
     virtual bool isPassable() const {return false;}
     virtual bool blocksFlame() const {return true;}
-    virtual bool isDamagable() const {return false;}
 };
 
 class Person: public Actor{             // Citizens and Zombies
@@ -72,7 +71,8 @@ public:
     
     virtual bool isPassable() const {return false;}       // false for all People
     virtual bool isInfectable() const {return true;}
-    virtual bool isSavable() const { return true;}
+    virtual bool isSavable() const {return true;}
+    virtual bool triggersActiveLandmines() const {return true;}
     
     // mutators and accessors
     virtual void setInfected(bool inf){ m_isInfected = inf;}
@@ -96,6 +96,7 @@ public:
     
     virtual void doSomething();
     virtual void useExitIfAppropriate();
+    virtual void dieByFallOrBurnIfAppropriate();
     
 private:
     bool m_paralyzed;
@@ -119,19 +120,25 @@ public:
     int getFlames() const {return m_nFlames;}
     int getVaccines() const {return m_nVaccines;}
     
-    void setLandmines(int charges){m_nLandmines = charges;} // mutators
-    void setFlames(int charges){m_nFlames = charges;}
-    void setVaccines(int charges){m_nVaccines = charges;}
+    void addLandmines(int charges){m_nLandmines += charges;} // mutators
+    void addFlames(int charges){m_nFlames += charges;}
+    void addVaccines(int charges){m_nVaccines += charges;}
     
     bool hasExited() const {return m_exited;}
     void exit(){m_exited = true;}
     virtual void useExitIfAppropriate();
+    
+    virtual void dieByFallOrBurnIfAppropriate();
     
 private:
     int m_nLandmines;
     int m_nFlames;
     int m_nVaccines;
     bool m_exited;
+    
+    void useVaccine();
+    void useFlamethrower();
+    void dropLandmine();
 };
 
 
@@ -142,7 +149,6 @@ public:
     :Actor(imageID, startX, startY, w, dir, depth){}
     
     virtual void doSomething();
-    virtual bool appropriateType(Actor *a){return false;}             // checks if "a" can activate the object
 };
 
     // Exit class
@@ -151,10 +157,44 @@ public:
     Exit(double startX, double startY, StudentWorld* w)
     :Activator(IID_EXIT, startX, startY, w, right, 1) {}
     
-    virtual bool isDamagable() const {return false;}
     virtual bool blocksFlame() const {return true; }
-    virtual void activateIfAppropriate(Actor *a);
-    virtual bool appropriateType(Actor *a){return a->isSavable();}
+    virtual void activateIfAppropriate(Actor* a);
+};
+
+    // Pit class
+class Pit: public Activator{
+public:
+    Pit(double startX, double startY, StudentWorld* w)
+    :Activator(IID_PIT, startX, startY, w){}
+    
+    virtual void activateIfAppropriate(Actor* a);
+};
+
+    // Flame class
+class Flame: public Activator{
+public:
+    Flame(double startX, double startY, StudentWorld* w, Direction d)
+    :Activator(IID_FLAME, startX, startY, w, d, 0), m_liveTicks(2){}
+    
+    virtual void doSomething();
+    
+    virtual void activateIfAppropriate(Actor* a);
+private:
+    int m_liveTicks;
+};
+
+class Landmine: public Activator{
+public:
+    Landmine(double startX, double startY, StudentWorld* w)
+    :Activator(IID_LANDMINE, startX, startY, w, right, 1), m_safetyTics(30){}
+    
+    virtual void doSomething();
+    virtual void activateIfAppripriate(Actor* a);
+    virtual void dieByFallOrBurnIfAppropriate();
+    
+private:
+    int m_safetyTics;
+    void trigger();
 };
 
     // Goodies
@@ -164,9 +204,10 @@ public:
     :Activator(imageID, startX, startY, w, right, 1){}
     
     virtual void activateIfAppropriate(Actor* a);
-    virtual bool appropriateType(Actor* a){return a->picksUpGoodies();}
     virtual void pickup(Penelope* p);
     virtual void incrementSupply(Penelope *p) = 0;
+    
+    virtual void dieByFallOrBurnIfAppropriate();
 };
 
 class GasCanGoodie: public Goodie{
@@ -174,9 +215,7 @@ public:
     GasCanGoodie(double startX, double startY, StudentWorld* w)
     :Goodie(IID_GAS_CAN_GOODIE, startX, startY, w){}
     
-    virtual void incrementSupply(Penelope *p){
-        p->setFlames(p->getFlames()+5);
-    }
+    virtual void incrementSupply(Penelope *p) {p->addFlames(5);}
 };
 
 class LandmineGoodie: public Goodie{
@@ -184,9 +223,7 @@ public:
     LandmineGoodie(double startX, double startY, StudentWorld* w)
     :Goodie(IID_LANDMINE_GOODIE, startX, startY, w){}
     
-    virtual void incrementSupply(Penelope *p){
-        p->setLandmines(p->getLandmines()+2);
-    }
+    virtual void incrementSupply(Penelope *p) {p->addLandmines(2);}
 };
 
 class VaccineGoodie: public Goodie{
@@ -194,9 +231,7 @@ public:
     VaccineGoodie(double startX, double startY, StudentWorld* w)
     :Goodie(IID_VACCINE_GOODIE, startX, startY, w){}
     
-    virtual void incrementSupply(Penelope *p){
-        p->setVaccines(p->getVaccines()+1);
-    }
+    virtual void incrementSupply(Penelope *p) {p->addVaccines(1);}
 };
 
 #endif // ACTOR_H_

@@ -25,7 +25,7 @@ StudentWorld::~StudentWorld()
 }
 
 int StudentWorld::init()
-{    
+{
     ostringstream s;
     s << "level";
     s.fill('0');
@@ -35,18 +35,16 @@ int StudentWorld::init()
     
 //    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
     
+    
     ////////////////////////////////
     Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
     
-    if(lev == Level::load_fail_file_not_found){
-        cerr << "Cannot find level data file" << endl;
+    if(getLevel() >= 99 || lev == Level::load_fail_file_not_found){
         return GWSTATUS_PLAYER_WON;
         
     }else if(lev == Level::load_fail_bad_format){
-        cerr << "Your level was improperly formatted" << endl;
+        return GWSTATUS_LEVEL_ERROR;
     }else if(lev == Level::load_success){
-        cerr << "Successfully loaded level" << endl;
-        
         Level::MazeEntry entry;
         for(int level_x = 0; level_x < LEVEL_WIDTH; level_x++){
             for(int level_y = 0; level_y < LEVEL_HEIGHT; level_y++){
@@ -81,6 +79,10 @@ int StudentWorld::init()
                         a = new VaccineGoodie(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
                         m_actors.push_back(a);
                         break;
+                    case Level::pit:
+                        a = new Pit(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
+                        m_actors.push_back(a);
+                        break;
                 }
             }
         }
@@ -105,10 +107,12 @@ int StudentWorld::move()
     vector<Actor*>::iterator it = m_actors.begin();
     while(it != m_actors.end()){   // delete any dead Actors
         if(!(*it)->getIsAlive()){
-            delete *it;
-            m_actors.erase(it);
+            delete (*it);
+            it = m_actors.erase(it);
+        }else{
+            it++;
         }
-        it++;
+        
     }
     
     updateDisplayMessage();                 // update status message
@@ -152,11 +156,30 @@ bool StudentWorld::validDestination(double destX, double destY, Actor* a){  // o
     return true; 
 }
 
+bool StudentWorld::validFlameDestination(double destX, double destY){
+    for(int i = 0; i < m_actors.size(); i++){
+        if(m_actors[i]->blocksFlame()){                   // walls and exits block flames
+            Actor* curr = m_actors[i];
+            
+            if( (abs(destX - curr->getX()) < SPRITE_WIDTH) &&
+               (abs(destY - curr->getY()) < SPRITE_HEIGHT) ){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void StudentWorld::updateDisplayMessage(){
     ostringstream msg;
     msg << "Score: ";
     msg.fill('0');
-    msg << setw(6) << getScore() << "  ";                       // score
+    if(getScore() < 0){                                         // score
+        msg << "-";
+        msg << setw(5) << abs(getScore()) << " ";
+    }else{
+        msg << setw(6) << getScore() << "  ";
+    }
     msg << "Level: " << getLevel() << "  ";                     // level
     msg << "Lives: " << getLives() << "  ";                     // lives
     msg << "Vaccines: " << m_penelope->getVaccines() << "  ";   // vaccines
@@ -168,11 +191,14 @@ void StudentWorld::updateDisplayMessage(){
 }
 
 void StudentWorld::activateOnAppropriateActors(Actor *a){
-    if(isOverlapping(a, m_penelope)){
+    if(isOverlapping(a, m_penelope) && m_penelope->getIsAlive()){
         a->activateIfAppropriate(m_penelope);
     }
     for(int i = 0; i < m_actors.size(); i++){
-        if(isOverlapping(a, m_actors[i])){
+        if(!a->getIsAlive())                                // if "a" dies at any point, return immediately
+            return;
+    
+        if(isOverlapping(a, m_actors[i]) && m_actors[i]->getIsAlive()){
             a->activateIfAppropriate(m_actors[i]);
         }
     }
