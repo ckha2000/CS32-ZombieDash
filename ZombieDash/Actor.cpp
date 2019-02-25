@@ -50,8 +50,8 @@ void Penelope::doSomething(){
 }
 
 void Penelope::useVaccine(){
-    if(m_nVaccines > 0 && isInfected()){
-        setInfected(false);
+    if(m_nVaccines > 0){
+        clearInfection();
     }
     m_nVaccines--;
 }
@@ -109,18 +109,29 @@ void Citizen::useExitIfAppropriate(){
     setIsAlive(false);
 }
 
+void Person::beVomitedOnIfAppropriate(){
+    if(!m_isInfected){
+        m_isInfected = true;
+    }
+}
+
 void Citizen::doSomething(){
     if(!getIsAlive())           // return immediately if not alive
         return;
     
-    if(isInfected()){
-        if(incrementInfection()){
-            setIsAlive(false);
-            
-            // killCitizen() function
+    if(incrementInfection()){
+        setIsAlive(false);
+        
+        // killCitizen() function
 //            getWorld()->killCitizen(getX(), getX());
-            return;
-        }
+        return;
+    }
+    
+    if(m_paralyzed){            // paralyzed every other tic
+        m_paralyzed = false;
+        return;
+    }else{
+        m_paralyzed = true;
     }
     
     double dist_p = getWorld()->distToPenelope(getX(), getY());
@@ -141,13 +152,13 @@ void Activator::doSomething(){
     }
 }
 
-void Flame::doSomething(){
-    if(m_liveTicks <= 0){
+void Projectile::doSomething(){
+    if(m_liveTics <= 0){
         setIsAlive(false);
         return;
     }
     Activator::doSomething();
-    m_liveTicks--;
+    m_liveTics--;
 }
 
 void Landmine::doSomething(){
@@ -207,6 +218,10 @@ void Flame::activateIfAppropriate(Actor* a){
     a->dieByFallOrBurnIfAppropriate();
 }
 
+void Vomit::activateIfAppropriate(Actor* a){
+    a->beVomitedOnIfAppropriate();
+}
+
 void Landmine::activateIfAppropriate(Actor *a){
     if(a->triggersActiveLandmines())
         trigger();
@@ -233,10 +248,10 @@ void Landmine::dieByFallOrBurnIfAppropriate(){
     trigger();
 }
 
-/*
+
 void Zombie::dieByFallOrBurnIfAppropriate(){
- setIsAlive(false);
- getWorld()->increaseScore(m_score);
- getWorld()->playSound(SOUND_ZOMBIE_DIE);
+    setIsAlive(false);
+    getWorld()->increaseScore(m_score);
+    getWorld()->playSound(SOUND_ZOMBIE_DIE);
 }
-*/
+

@@ -83,6 +83,7 @@ int StudentWorld::init()
                         a = new Pit(level_x*SPRITE_WIDTH, level_y*SPRITE_HEIGHT, this);
                         m_actors.push_back(a);
                         break;
+                        
                 }
             }
         }
@@ -209,7 +210,7 @@ void StudentWorld::activateOnAppropriateActors(Actor *a){
 
 bool StudentWorld::citizensLeft(){
     for(int i = 0 ; i < m_actors.size(); i++){
-        if(m_actors[i]->isSavable())
+        if(m_actors[i]->isInfectable())
             return false;
     }
     return true;
