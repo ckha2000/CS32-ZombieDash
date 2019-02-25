@@ -127,7 +127,10 @@ void StudentWorld::cleanUp()
         delete (*it);
         it = m_actors.erase(it);
     }
-    delete m_penelope;
+    if(m_penelope != nullptr){
+        delete m_penelope;
+        m_penelope = nullptr;
+    }
 }
 
 bool StudentWorld::validDestination(double destX, double destY, Actor* a){  // only call after level has been set

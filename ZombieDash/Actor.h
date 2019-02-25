@@ -27,7 +27,6 @@ public:
     virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
     virtual bool isSavable() const {return false;}      // only Penelope and citizens can be saved
     virtual bool isHostile() const {return false;}      // zombies are hostile
-    virtual bool picksUpGoodies() const {return false;} // Penelope
     
 //    virtual void getDamaged(){}         // maybe later
     
@@ -124,11 +123,11 @@ public:
     void addFlames(int charges){m_nFlames += charges;}
     void addVaccines(int charges){m_nVaccines += charges;}
     
-    bool hasExited() const {return m_exited;}
+    bool hasExited() const {return m_exited;}               // exit
     void exit(){m_exited = true;}
     virtual void useExitIfAppropriate();
     
-    virtual void dieByFallOrBurnIfAppropriate();
+    virtual void dieByFallOrBurnIfAppropriate();            // dying
     
 private:
     int m_nLandmines;
@@ -173,7 +172,7 @@ public:
     // Flame class
 class Flame: public Activator{
 public:
-    Flame(double startX, double startY, StudentWorld* w, Direction d)
+    Flame(double startX, double startY, StudentWorld* w, Direction d = right)
     :Activator(IID_FLAME, startX, startY, w, d, 0), m_liveTicks(2){}
     
     virtual void doSomething();
@@ -189,7 +188,7 @@ public:
     :Activator(IID_LANDMINE, startX, startY, w, right, 1), m_safetyTics(30){}
     
     virtual void doSomething();
-    virtual void activateIfAppripriate(Actor* a);
+    virtual void activateIfAppropriate(Actor* a);
     virtual void dieByFallOrBurnIfAppropriate();
     
 private:

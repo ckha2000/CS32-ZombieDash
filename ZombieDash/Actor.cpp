@@ -179,8 +179,23 @@ void Goodie::pickup(Penelope* p){
 }
 
 void Landmine::trigger(){
+    setIsAlive(false);
+    getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
     
+    getWorld()->addActor(new Pit(getX(), getY(), getWorld()));
     
+    double posX = getX() - SPRITE_WIDTH;
+    double posY = getY() - SPRITE_HEIGHT;
+    
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(getWorld()->validFlameDestination(posX, posY))
+                getWorld()->addActor(new Flame(posX, posY, getWorld()));
+            posX += SPRITE_WIDTH;
+        }
+        posX = getX() - SPRITE_WIDTH;
+        posY += SPRITE_HEIGHT;
+    }
 }
 
     // hazard activations
@@ -192,7 +207,7 @@ void Flame::activateIfAppropriate(Actor* a){
     a->dieByFallOrBurnIfAppropriate();
 }
 
-void Landmine::activateIfAppripriate(Actor *a){
+void Landmine::activateIfAppropriate(Actor *a){
     if(a->triggersActiveLandmines())
         trigger();
 }
