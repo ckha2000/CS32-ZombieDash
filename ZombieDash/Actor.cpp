@@ -4,10 +4,35 @@
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 
+//////////////
+//////////////          Person
+
+void Person::beVomitedOnIfAppropriate(){
+    if(!m_isInfected){
+        m_isInfected = true;
+    }
+}
+
+bool Person::incrementInfection(){       // increments the infection count and returns whether the count exceeds 500
+    if(m_isInfected)
+        m_infectCount++;
+    if(m_infectCount >= 500){
+        dieByInfection();
+        return true;
+    }
+    return false;
+}
+
+//////////////
+//////////////          Penelope
+
 void Penelope::doSomething(){
-    if(!getIsAlive()){
+    if(!getIsAlive()){              // check alive state first
         return;
     }
+    
+    if(incrementInfection())        // increment infection -> if died from infection, return immediately
+        return;
     
     int input = 0;
     if(getWorld()->getKey(input)){
@@ -52,8 +77,8 @@ void Penelope::doSomething(){
 void Penelope::useVaccine(){
     if(m_nVaccines > 0){
         clearInfection();
+        m_nVaccines--;
     }
-    m_nVaccines--;
 }
 
 void Penelope::useFlamethrower(){
@@ -103,36 +128,36 @@ void Penelope::useExitIfAppropriate(){
     }
 }
 
-void Citizen::useExitIfAppropriate(){
-    getWorld()->increaseScore(500);
-    getWorld()->playSound(SOUND_CITIZEN_SAVED);
+void Penelope::dieByInfection(){
     setIsAlive(false);
+    getWorld()->playSound(SOUND_PLAYER_DIE);
 }
 
-void Person::beVomitedOnIfAppropriate(){
-    if(!m_isInfected){
-        m_isInfected = true;
-    }
+void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
+    g->pickup(this);
 }
+
+void Penelope::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+    getWorld()->decLives();
+    getWorld()->playSound(SOUND_PLAYER_DIE);
+}
+
+//////////////
+//////////////          Citizen
 
 void Citizen::doSomething(){
     if(!getIsAlive())           // return immediately if not alive
         return;
     
-    if(incrementInfection()){
-        setIsAlive(false);
-        
-        // killCitizen() function
-//            getWorld()->killCitizen(getX(), getX());
+    if(incrementInfection())    // return immediately if dead after incrementing infection
         return;
-    }
     
     if(m_paralyzed){            // paralyzed every other tic
         m_paralyzed = false;
         return;
-    }else{
+    }else
         m_paralyzed = true;
-    }
     
     double dist_p = getWorld()->distToPenelope(getX(), getY());
     double dist_z = getWorld()->distToNearestZombie(getX(), getY());
@@ -145,48 +170,230 @@ void Citizen::doSomething(){
     }
 }
 
-// Activator doSomething()'s
+void Citizen::useExitIfAppropriate(){
+    getWorld()->increaseScore(500);
+    getWorld()->playSound(SOUND_CITIZEN_SAVED);
+    setIsAlive(false);
+}
+
+void Citizen::dieByInfection(){
+    setIsAlive(false);
+    getWorld()->increaseScore(-1000);
+    
+    getWorld()->playSound(SOUND_ZOMBIE_BORN);
+    int rand = randInt(0, 9);
+    if(rand <= 2){
+        getWorld()->addActor(new SmartZombie(getX(), getY(), getWorld()));
+    }else{
+        getWorld()->addActor(new DumbZombie(getX(), getY(), getWorld()));
+    }
+}
+
+void Citizen::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+    getWorld()->increaseScore(-1000);
+    getWorld()->playSound(SOUND_CITIZEN_DIE);
+}
+
+//////////////
+//////////////      Zombie
+
+void Zombie::doSomething(){
+    if(!getIsAlive()){          // check if alive
+        return;
+    }
+    
+    if(m_paralyzed){            // paralyzed every other tic
+        m_paralyzed = false;
+        return;
+    }else
+        m_paralyzed = true;
+    
+    if(vomitIfTarget())
+        return;
+
+    if(m_movePlan <= 0){
+        m_movePlan = randInt(3, 10);
+        setDirection(chooseDirection());   // DumbZombie and SmartZombie only
+    }                                       // differ in the direction of their movePlan
+    
+    double destX = getX();
+    double destY = getY();
+    switch (getDirection()) {
+        case right:
+            destX += 1;
+            break;
+        case left:
+            destX -= 1;
+            break;
+        case up:
+            destY += 1;
+            break;
+        case down:
+            destY -= 1;
+    }
+    
+    if(getWorld()->validDestination(destX, destY, this)){
+        moveTo(destX, destY);
+        m_movePlan--;
+    }else{
+        m_movePlan = 0;
+    }
+}
+
+bool Zombie::vomitIfTarget(){
+    int rand = randInt(0, 2);       // there is only a 1 in 3 chance of vomiting so
+    if(rand > 0){                   // if the randInt is 0, the zombie will vomit
+        return false;
+    }
+    
+    double tarX = getX();
+    double tarY = getY();
+    
+    switch(getDirection()){             // targets location directly in front of zombie
+        case right:
+            tarX += SPRITE_WIDTH;
+            break;
+        case left:
+            tarX -= SPRITE_WIDTH;
+            break;
+        case up:
+            tarY += SPRITE_HEIGHT;
+            break;
+        case down:
+            tarY -= SPRITE_HEIGHT;
+            break;
+    }
+    
+    if(getWorld()->validVomitTargetAt(tarX, tarY)){    // checks whether target location has an Infectable actor
+        getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
+        getWorld()->addActor(new Vomit(tarX, tarY, getWorld(), getDirection()));
+        return true;
+    }
+    
+    return false;
+}
+
+void Zombie::dieByFallOrBurnIfAppropriate(){
+    setIsAlive(false);
+    getWorld()->increaseScore(m_score);
+    getWorld()->playSound(SOUND_ZOMBIE_DIE);
+}
+
+void DumbZombie::dieByFallOrBurnIfAppropriate(){
+    int rand = randInt(0, 9);         // DumbZombies have a 1/10 chance of dropping a vaccine
+    if(rand == 0){
+        throwVaccine();
+    }
+    Zombie::dieByFallOrBurnIfAppropriate();
+}
+
+void DumbZombie::throwVaccine(){
+    Direction d = Zombie::chooseDirection();        // DumbZombie's chooseDirection() gives a random Direction
+    
+    double tarX = getX();
+    double tarY = getY();
+    
+    switch(d){             // targets location directly in front of zombie
+        case right:
+            tarX += SPRITE_WIDTH;
+            break;
+        case left:
+            tarX -= SPRITE_WIDTH;
+            break;
+        case up:
+            tarY += SPRITE_HEIGHT;
+            break;
+        case down:
+            tarY -= SPRITE_HEIGHT;
+            break;
+    }
+    
+    if(getWorld()->validDestination(tarX, tarY, nullptr)){
+        getWorld()->addActor(new VaccineGoodie(tarX, tarY, getWorld()));
+    }
+}
+
+Direction Zombie::chooseDirection(){
+    int rand = randInt(0, 3);               // DumbZombies choose a random Direction regardless of positions of
+                                                // other actors
+    switch(rand){
+        case 0:
+            return right;
+            break;
+        case 1:
+            return down;
+            break;
+        case 2:
+            return left;
+            break;
+        default:
+            return up;
+    }
+}
+
+Direction SmartZombie::chooseDirection(){
+    double x = 0;
+    double y = 0;
+    double d = 0;
+    
+    if(!getWorld()->locateNearestVomitTrigger(getX(), getY(), x, y, d)){    // if no targets in range
+        return Zombie::chooseDirection();                                       // choose a random Direction
+    }
+    
+    Direction vertical = -1;
+    Direction horizontal = -1;
+    
+    if(x < getX()){
+        horizontal = left;
+    }else if(x > getX()){
+        horizontal = right;
+    }
+    if(y < getY()){
+        vertical = down;
+    }else if (y > getY()){
+        vertical = up;
+    }
+    
+    if(vertical == -1){     // if either direction is vertical, it means that the zombie is alligned in the other
+        return horizontal;          // direction with the Actor
+    }else if(horizontal == -1){
+        return vertical;
+    }else{
+        int rand = randInt(0, 1);
+        if(rand == 0)
+            return horizontal;
+        else
+            return vertical;
+    }
+}
+
+//////////////
+//////////////          Activators
+
 void Activator::doSomething(){
     if(getIsAlive()){
         getWorld()->activateOnAppropriateActors(this);
     }
 }
 
-void Projectile::doSomething(){
-    if(m_liveTics <= 0){
-        setIsAlive(false);
-        return;
-    }
-    Activator::doSomething();
-    m_liveTics--;
+    // Exit
+void Exit::activateIfAppropriate(Actor* a){
+    a->useExitIfAppropriate();
 }
 
+    // Pit
+void Pit::activateIfAppropriate(Actor* a){
+    a->dieByFallOrBurnIfAppropriate();
+}
+
+    // Landmine
 void Landmine::doSomething(){
     if(m_safetyTics > 0){
         m_safetyTics--;
         return;
     }
     Activator::doSomething();
-}
-
-void Exit::activateIfAppropriate(Actor* a){
-        a->useExitIfAppropriate();
-}
-
-void Goodie::activateIfAppropriate(Actor* a){
-    if(getIsAlive())
-        a->pickUpGoodieIfAppropriate(this);
-}
-
-void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
-    g->pickup(this);
-}
-
-void Goodie::pickup(Penelope* p){
-    incrementSupply(p);
-    getWorld()->increaseScore(50);
-    getWorld()->playSound(SOUND_GOT_GOODIE);
-    setIsAlive(false);
 }
 
 void Landmine::trigger(){
@@ -209,9 +416,25 @@ void Landmine::trigger(){
     }
 }
 
-    // hazard activations
-void Pit::activateIfAppropriate(Actor* a){
-    a->dieByFallOrBurnIfAppropriate();
+void Landmine::dieByFallOrBurnIfAppropriate(){
+    trigger();
+}
+
+void Landmine::activateIfAppropriate(Actor *a){
+    if(a->triggersActiveLandmines())
+        trigger();
+}
+
+//////////////
+//////////////          Projectiles
+
+void Projectile::doSomething(){
+    if(m_liveTics <= 0){
+        setIsAlive(false);
+        return;
+    }
+    Activator::doSomething();
+    m_liveTics--;
 }
 
 void Flame::activateIfAppropriate(Actor* a){
@@ -222,36 +445,23 @@ void Vomit::activateIfAppropriate(Actor* a){
     a->beVomitedOnIfAppropriate();
 }
 
-void Landmine::activateIfAppropriate(Actor *a){
-    if(a->triggersActiveLandmines())
-        trigger();
+//////////////
+//////////////          Goodies
+
+void Goodie::activateIfAppropriate(Actor* a){
+    if(getIsAlive())
+        a->pickUpGoodieIfAppropriate(this);
 }
 
-    // dieByFallOrBurnIfAppropriate()
-void Citizen::dieByFallOrBurnIfAppropriate(){
+void Goodie::pickup(Penelope* p){
+    incrementSupply(p);
+    getWorld()->increaseScore(50);
+    getWorld()->playSound(SOUND_GOT_GOODIE);
     setIsAlive(false);
-    getWorld()->increaseScore(-1000);
-    getWorld()->playSound(SOUND_CITIZEN_DIE);
-}
-
-void Penelope::dieByFallOrBurnIfAppropriate(){
-    setIsAlive(false);
-    getWorld()->decLives();
-    getWorld()->playSound(SOUND_PLAYER_DIE);
 }
 
 void Goodie::dieByFallOrBurnIfAppropriate(){
     setIsAlive(false);
 }
 
-void Landmine::dieByFallOrBurnIfAppropriate(){
-    trigger();
-}
-
-
-void Zombie::dieByFallOrBurnIfAppropriate(){
-    setIsAlive(false);
-    getWorld()->increaseScore(m_score);
-    getWorld()->playSound(SOUND_ZOMBIE_DIE);
-}
 

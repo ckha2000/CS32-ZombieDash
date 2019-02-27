@@ -8,15 +8,13 @@
 class StudentWorld;
 class Goodie;
 
-    // Actor class
+//////////////
+//////////////          Actor class
+
 class Actor: public GraphObject{
 public:
     Actor(int imageID, double startX, double startY, StudentWorld* w, Direction dir = right, int depth = 0)
-    :GraphObject(imageID, startX, startY, dir, depth)
-    {
-        m_isAlive = true;
-        m_world = w;
-    }
+    :GraphObject(imageID, startX, startY, dir, depth), m_isAlive(true), m_world(w) {}
     
     virtual ~Actor(){};
     virtual void doSomething() = 0;
@@ -27,8 +25,6 @@ public:
     virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
     virtual bool isHostile() const {return false;}      // zombies are hostile
     virtual bool triggersActiveLandmines() const {return false;}    // for people and zombies
-    
-//    virtual void getDamaged(){}         // maybe later
     
     // mutators/accessors
     void setIsAlive(bool isAlive){ m_isAlive = isAlive; }
@@ -47,6 +43,9 @@ private:
     StudentWorld* m_world;
 };
 
+//////////////
+//////////////          Person
+
 class Person: public Actor{             // Citizens and Penelope
 public:
     Person(int imageID, double startX, double startY, StudentWorld* w)
@@ -57,18 +56,18 @@ public:
     
     virtual void beVomitedOnIfAppropriate();
     
-    void clearInfection(){m_isInfected = false;}
+    void clearInfection(){m_isInfected = false;}         // called when Penelope uses vaccine
     int getInfectCount() const {return m_infectCount;}
-    bool incrementInfection(){                           // return true if infection is 500 (dead)
-        if(m_isInfected)
-            m_infectCount++;
-        return m_infectCount >= 500;
-    }
+    bool incrementInfection();                           // return true if infection is 500 (dead)
+    virtual void dieByInfection() = 0;
     
 private:
     bool m_isInfected;
     int m_infectCount;
 };
+
+//////////////
+//////////////          Citizen
 
 class Citizen: public Person{
 public:
@@ -78,12 +77,14 @@ public:
     virtual void doSomething();
     virtual void useExitIfAppropriate();
     virtual void dieByFallOrBurnIfAppropriate();
-    
+    virtual void dieByInfection();
 private:
     bool m_paralyzed;
 };
 
-    // Penelope class
+//////////////
+//////////////          Penelope class
+
 class Penelope: public Person{
 public:
     Penelope(double startX, double startY, StudentWorld* w)
@@ -109,6 +110,7 @@ public:
     void exit(){m_exited = true;}
     virtual void useExitIfAppropriate();
     virtual void dieByFallOrBurnIfAppropriate();            // dying
+    virtual void dieByInfection();
     
 private:
     int m_nLandmines;
@@ -121,39 +123,35 @@ private:
     void dropLandmine();
 };
 
+//////////////
+//////////////          Zombie
+
 class Zombie: public Actor{
 public:
     Zombie(double startX, double startY, StudentWorld* w, int pointsWorth)
     :Actor(IID_ZOMBIE, startX, startY, w), m_movePlan(0), m_paralyzed(false), m_score(pointsWorth){}
     
-    virtual void doSomething(){}
+    virtual void doSomething();
     
     virtual bool isHostile(){return true;}
     virtual bool triggersActiveLandmines() const {return true;}
     virtual void dieByFallOrBurnIfAppropriate();
     
-protected:
-    void vomitOrNot();          // isZombieVomitTriggerAt(double x, double y) --> put in StudentWorld
-    
+    virtual Direction chooseDirection();
 private:
     int m_movePlan;
     bool m_paralyzed;
     int m_score;
+    bool vomitIfTarget();
 };
 
 class DumbZombie: public Zombie{
 public:
     DumbZombie(double startX, double startY, StudentWorld* w)
-    :Zombie(startX, startY, w, 1000){
-        int rand = randInt(0, 9);
-        if(rand == 0)
-            m_carryingVaccine = true;
-        else
-            m_carryingVaccine = false;
-    }
-    
+    :Zombie(startX, startY, w, 1000){}
+    virtual void dieByFallOrBurnIfAppropriate();        // override to throw vaccine if carrying one
 private:
-    bool m_carryingVaccine;
+    void throwVaccine();
 };
 
 class SmartZombie: public Zombie{
@@ -161,10 +159,12 @@ public:
     SmartZombie(double startX, double startY, StudentWorld* w)
     :Zombie(startX, startY, w, 2000){}
     
+    virtual Direction chooseDirection();
 };
 
 
-// Wall class
+//////////////
+//////////////          Wall class
 class Wall: public Actor{
 public:
     Wall(double startX, double startY, StudentWorld* w)
@@ -173,6 +173,9 @@ public:
     
     virtual bool blocksFlame() const {return true;}
 };
+
+//////////////
+//////////////          Activators
 
     // Activator class --> triggered by overlap
 class Activator: public Actor{
@@ -218,6 +221,8 @@ private:
     void trigger();
 };
 
+//////////////
+//////////////
     // Projectiles --> Flames and Vomit - last 2 tics
 class Projectile: public Activator{
 public:
@@ -241,15 +246,16 @@ public:
 };
 
     //Vomit class
-class Vomit: public Activator{
+class Vomit: public Projectile{
 public:
     Vomit(double startX, double startY, StudentWorld* w, Direction d)
-    :Activator(IID_VOMIT, startX, startY, w, d, 0){}
+    :Projectile(IID_VOMIT, startX, startY, w, d){}
     
     virtual void activateIfAppropriate(Actor* a);
 };
 
-    // Goodies
+//////////////
+//////////////          Goodies
 class Goodie: public Activator{
 public:
     Goodie(int imageID, double startX, double startY, StudentWorld* w)

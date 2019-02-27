@@ -105,15 +105,15 @@ int StudentWorld::move()
     m_penelope->doSomething();              // Penelope moves first
     
     for(int i = 0; i < m_actors.size(); i++){ // the rest of the Actors move
+        if(!m_penelope->getIsAlive())       // if Penelope dies at any point, let world know
+            return GWSTATUS_PLAYER_DIED;
+
         m_actors[i]->doSomething();
         
         if(m_penelope->hasExited())         // if Penelope completes the level at any point, let world know
             return GWSTATUS_FINISHED_LEVEL;
-        
-        if(!m_penelope->getIsAlive())       // if Penelope dies at any point, let world know
-            return GWSTATUS_PLAYER_DIED;
     }
-    
+
     vector<Actor*>::iterator it = m_actors.begin();
     while(it != m_actors.end()){   // delete any dead Actors
         if(!(*it)->getIsAlive()){
@@ -225,15 +225,22 @@ bool StudentWorld::citizensLeft(){
     return true;
 }
 
+double StudentWorld::calcDist(double x1, double y1, double x2, double y2) const {
+    double difX = x1 - x2;
+    double difY = y1 - y2;
+    return sqrt(difX*difX + difY*difY);
+}
+
 bool StudentWorld::isOverlapping(Actor* a, Actor* b) const{
     if(a == b)
         return false;
     
-    double xDis = a->getX() - b->getX();
-    double yDis = a->getY() - b->getY();
-    
-    return (sqrt(xDis*xDis + yDis*yDis) <= 10);
+    return (calcDist(a->getX(), a->getY(), b->getX(), b->getY()) <= 10);
 }
+
+bool StudentWorld::isOverlapping(Actor *a, double x, double y) const{   // use for Zombies
+    return (calcDist(a->getX(), a->getY(), x, y) <= 10);
+} 
 
 // citizen helper functions
 double StudentWorld::distToNearestZombie(double posX, double posY){
@@ -274,3 +281,50 @@ void StudentWorld::moveToPenelope(Actor* a){
         }
     }
 }
+
+    //Zombies
+bool StudentWorld::validVomitTargetAt(double tarX, double tarY){
+    if(isOverlapping(m_penelope, tarX, tarY))
+        return true;
+    
+    for(int i = 0; i < m_actors.size(); i++){
+        if(m_actors[i]->isInfectable()){
+            if(isOverlapping(m_actors[i], tarX, tarY))
+                return true;
+        }
+    }
+    return false;
+}
+
+        // used by SmartZombie to determine closest infectable Actor
+        // returns true if there is a person within 80 units,
+            // if true, sets otherX and otherY to that Person's coordinates and distance to the Euclidean distance
+        // if false, otherX, otherY, and distance are left unchanged
+bool StudentWorld::locateNearestVomitTrigger(double x, double y, double& otherX, double& otherY, double& distance){
+    Actor* closest;
+    double closestDist = 0;
+    
+    closest = m_penelope;
+    closestDist = calcDist(x, y, m_penelope->getX(), m_penelope->getY());
+    
+    for(int i = 0; i < m_actors.size(); i++){
+        if(!m_actors[i]->isInfectable())
+            continue;
+        
+        double tempDist = calcDist(x, y, m_actors[i]->getX(), m_actors[i]->getY());
+        if(tempDist < closestDist){
+            closest = m_actors[i];
+            closestDist = tempDist;
+        }
+    }
+    
+    if(closestDist <= 80){
+        otherX = closest->getX();
+        otherY = closest->getY();
+        distance = closestDist;
+        return true;
+    }
+    return false;
+}
+
+
