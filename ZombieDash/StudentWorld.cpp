@@ -29,11 +29,11 @@ int StudentWorld::init()
     s << ".txt";
     string levelTxt = s.str();
     
-//    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
+    Level::LoadResult lev = m_level.loadLevel(levelTxt);              
     
     
     ////////////////////////////////
-    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
+//    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
     
     if(getLevel() >= 99 || lev == Level::load_fail_file_not_found){
         return GWSTATUS_PLAYER_WON;
