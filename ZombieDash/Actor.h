@@ -33,7 +33,7 @@ public:
     // overlap functions
     virtual void activateIfAppropriate(Actor* a){}      // for activators
     virtual void useExitIfAppropriate(){}               // for people
-    virtual void dieByFallOrBurnIfAppropriate(){}       // for people, zombies and goodies (and landmines?)
+    virtual void dieByFallOrBurnIfAppropriate(){}       // for people, zombies, goodies and landmines
     virtual void pickUpGoodieIfAppropriate(Goodie* g){} // for penelope
     virtual void beVomitedOnIfAppropriate(){}           // for people
     
@@ -45,10 +45,12 @@ private:
 //////////////
 //////////////          Agent
 
-class Agent: public Actor{
+class Agent: public Actor{                 // People and Zombies
 public:
     Agent(int imageID, double startX, double startY, StudentWorld* w, double speed = 0.0)
     :Actor(imageID, startX, startY, w), m_paralyzed(false), m_moveSpeed(speed){}
+    
+    virtual bool triggersActiveLandmines() const {return true;}
     
 protected:
     bool getParalyzed() const {return m_paralyzed;}
@@ -71,16 +73,14 @@ public:
     :Agent(imageID, startX, startY, w, speed), m_isInfected(false), m_infectCount(0) {}
     
     virtual bool isInfectable() const {return true;}
-    virtual bool triggersActiveLandmines() const {return true;}
-    
     virtual void beVomitedOnIfAppropriate();
-    
-    
-    void clearInfection(){m_isInfected = false;}         // called when Penelope uses vaccine
-    bool incrementInfection();                           // return true if infection is 500 (dead)
-    virtual void dieByInfection() = 0;
-    bool isInfected(){return m_isInfected;}
     int getInfectCount() const {return m_infectCount;}
+    
+protected:
+    virtual void dieByInfection() = 0;
+    bool incrementInfection();                           // return true if infection is 500 (dead)
+    bool isInfected(){return m_isInfected;}
+    void clearInfection(){m_isInfected = false;}         // called when Penelope uses vaccine
     
 private:
     bool m_isInfected;
@@ -112,28 +112,28 @@ private:
 class Penelope: public Person{
 public:
     Penelope(double startX, double startY, StudentWorld* w)
-    :Person(IID_PLAYER, startX, startY, w)
+    :Person(IID_PLAYER, startX, startY, w), m_exited(false)
     {
         m_nLandmines = m_nFlames = m_nVaccines = 0;
-        m_exited = false;
     }
     virtual void doSomething();
     
-    virtual bool picksUpGoodies() const {return true;}
-    virtual void pickUpGoodieIfAppropriate(Goodie* g);
-    
-    int getLandmines() const {return m_nLandmines;}        // accessors
+    // Accessor functions --> called for updating status message
+    int getLandmines() const {return m_nLandmines;}
     int getFlames() const {return m_nFlames;}
     int getVaccines() const {return m_nVaccines;}
+    bool hasExited() const {return m_exited;}
     
+    // Mutator functions --> called by Goodies' activation function
     void addLandmines(int charges){m_nLandmines += charges;} // mutators
     void addFlames(int charges){m_nFlames += charges;}
     void addVaccines(int charges){m_nVaccines += charges;}
     
-    bool hasExited() const {return m_exited;}               // exit
-    void exit(){m_exited = true;}
+    // overrides
+    virtual bool picksUpGoodies() const {return true;}
+    virtual void pickUpGoodieIfAppropriate(Goodie* g);
     virtual void useExitIfAppropriate();
-    virtual void dieByFallOrBurnIfAppropriate();            // dying
+    virtual void dieByFallOrBurnIfAppropriate();
     virtual void dieByInfection();
     
 private:
@@ -142,6 +142,7 @@ private:
     int m_nVaccines;
     bool m_exited;
     
+    // helper functions
     void useVaccine();
     void useFlamethrower();
     void dropLandmine();
@@ -156,11 +157,11 @@ public:
     :Agent(IID_ZOMBIE, startX, startY, w, 1), m_movePlan(0), m_score(pointsWorth){}
     
     virtual void doSomething();
-
-    virtual bool triggersActiveLandmines() const {return true;}
     virtual void dieByFallOrBurnIfAppropriate();
     
+protected:
     virtual Direction chooseDirection();
+    
 private:
     int m_movePlan;
     int m_score;
@@ -171,7 +172,9 @@ class DumbZombie: public Zombie{
 public:
     DumbZombie(double startX, double startY, StudentWorld* w)
     :Zombie(startX, startY, w, 1000){}
-    virtual void dieByFallOrBurnIfAppropriate();        // override to throw vaccine if carrying one
+    
+    virtual void dieByFallOrBurnIfAppropriate();
+    
 private:
     void throwVaccine();
 };
@@ -181,6 +184,7 @@ public:
     SmartZombie(double startX, double startY, StudentWorld* w)
     :Zombie(startX, startY, w, 2000){}
     
+protected:
     virtual Direction chooseDirection();
 };
 

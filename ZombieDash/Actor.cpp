@@ -148,7 +148,7 @@ void Penelope::dropLandmine(){
 void Penelope::useExitIfAppropriate(){
     if(getWorld()->citizensLeft()){
         getWorld()->playSound(SOUND_LEVEL_FINISHED);
-        exit();
+        m_exited = true;
     }
 }
 
@@ -222,46 +222,59 @@ void Citizen::doSomething(){
         return;
     }
 
-    double farthestDist = triggerDist;
-    double tempDist = 0.0;
+    double farthestDist = triggerDist;      // farthestDist current is the closest threat to the Citizen
+    double tempDist = 0.0;                  // we want to find directions that make the distance bigger
     Direction safestDir = -1;
     
     double destX, destY, threatX, threatY;
-    
+                                            // compare the distances to the closest zombie in each direction
     // up
     determineMoveDest(up, destX, destY);
     if(getWorld()->validDestination(destX, destY, this)){
-        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
-        if(tempDist > farthestDist){
-            farthestDist = tempDist;
-            safestDir = up;
+        if(getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist)){
+            if(tempDist > farthestDist){
+                farthestDist = tempDist;
+                safestDir = up;
+            }
         }
     }
     // down
+    determineMoveDest(down, destX, destY);
     if(getWorld()->validDestination(destX, destY, this)){
-        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
-        if(tempDist > farthestDist){
-            farthestDist = tempDist;
-            safestDir = up;
+        if(getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist)){
+            if(tempDist > farthestDist){
+                farthestDist = tempDist;
+                safestDir = down;
+            }
         }
     }
     // left
+    determineMoveDest(left, destX, destY);
     if(getWorld()->validDestination(destX, destY, this)){
-        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
-        if(tempDist > farthestDist){
-            farthestDist = tempDist;
-            safestDir = up;
+        if(getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist)){
+            if(tempDist > farthestDist){
+                farthestDist = tempDist;
+                safestDir = left;
+            }
         }
     }
     // right
+    determineMoveDest(right, destX, destY);
     if(getWorld()->validDestination(destX, destY, this)){
-        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
-        if(tempDist > farthestDist){
-            farthestDist = tempDist;
-            safestDir = up;
+        if(getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist)){
+            if(tempDist > farthestDist){
+                farthestDist = tempDist;
+                safestDir = right;
+            }
         }
     }
 
+    if(safestDir == -1)
+        return;
+    
+    // safestDir should give us the direction that has the greatest distance from
+    determineMoveDest(safestDir, destX, destY);
+    moveTo(destX, destY);
 }
 
 // given two possible directions, select one randomly and see
