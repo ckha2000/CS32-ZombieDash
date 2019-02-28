@@ -16,7 +16,7 @@ GameWorld* createStudentWorld(string assetPath)
 // Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-: GameWorld(assetPath), m_level(assetPath) {}
+: GameWorld(assetPath), m_level(assetPath), m_penelope(nullptr) {}
 
 StudentWorld::~StudentWorld() {cleanUp();}
 
@@ -30,7 +30,6 @@ int StudentWorld::init()
     string levelTxt = s.str();
     
     Level::LoadResult lev = m_level.loadLevel(levelTxt);              
-    
     
     ////////////////////////////////
 //    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
