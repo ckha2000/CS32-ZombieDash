@@ -23,7 +23,6 @@ public:
     virtual bool isPassable() const {return false;}     // returns whether object blocks movement
     virtual bool blocksFlame() const {return false;}    // returns whether object blocks flames
     virtual bool isInfectable() const {return false;}   // only Penelope and citizens can be Infected
-    virtual bool isHostile() const {return false;}      // zombies are hostile
     virtual bool triggersActiveLandmines() const {return false;}    // for people and zombies
     
     // mutators/accessors
@@ -44,22 +43,44 @@ private:
 };
 
 //////////////
+//////////////          Agent
+
+class Agent: public Actor{
+public:
+    Agent(int imageID, double startX, double startY, StudentWorld* w, double speed = 0.0)
+    :Actor(imageID, startX, startY, w), m_paralyzed(false), m_moveSpeed(speed){}
+    
+protected:
+    bool getParalyzed() const {return m_paralyzed;}
+    void setParalyzed(bool p){m_paralyzed = p;}
+    double getMoveSpeed(){return m_moveSpeed;}
+    void determineMoveDest(Direction d, double& destX, double& destY);
+    
+private:
+    bool m_paralyzed;
+    double m_moveSpeed;
+};
+
+
+//////////////
 //////////////          Person
 
-class Person: public Actor{             // Citizens and Penelope
+class Person: public Agent{             // Citizens and Penelope
 public:
-    Person(int imageID, double startX, double startY, StudentWorld* w)
-    :Actor(imageID, startX, startY, w), m_isInfected(false), m_infectCount(0) {}
+    Person(int imageID, double startX, double startY, StudentWorld* w, double speed = 0.0)
+    :Agent(imageID, startX, startY, w, speed), m_isInfected(false), m_infectCount(0) {}
     
     virtual bool isInfectable() const {return true;}
     virtual bool triggersActiveLandmines() const {return true;}
     
     virtual void beVomitedOnIfAppropriate();
     
+    
     void clearInfection(){m_isInfected = false;}         // called when Penelope uses vaccine
-    int getInfectCount() const {return m_infectCount;}
     bool incrementInfection();                           // return true if infection is 500 (dead)
     virtual void dieByInfection() = 0;
+    bool isInfected(){return m_isInfected;}
+    int getInfectCount() const {return m_infectCount;}
     
 private:
     bool m_isInfected;
@@ -72,14 +93,17 @@ private:
 class Citizen: public Person{
 public:
     Citizen(double startX, double startY, StudentWorld* w)
-    :Person(IID_CITIZEN, startX, startY, w), m_paralyzed(false){}
+    :Person(IID_CITIZEN, startX, startY, w, 2.0){}
     
     virtual void doSomething();
+    
+    virtual void beVomitedOnIfAppropriate();
     virtual void useExitIfAppropriate();
     virtual void dieByFallOrBurnIfAppropriate();
     virtual void dieByInfection();
+
 private:
-    bool m_paralyzed;
+    bool tryDirections(Direction v, Direction h, Direction& df, double& destX, double& destY);
 };
 
 //////////////
@@ -126,21 +150,19 @@ private:
 //////////////
 //////////////          Zombie
 
-class Zombie: public Actor{
+class Zombie: public Agent{
 public:
     Zombie(double startX, double startY, StudentWorld* w, int pointsWorth)
-    :Actor(IID_ZOMBIE, startX, startY, w), m_movePlan(0), m_paralyzed(false), m_score(pointsWorth){}
+    :Agent(IID_ZOMBIE, startX, startY, w, 1), m_movePlan(0), m_score(pointsWorth){}
     
     virtual void doSomething();
-    
-    virtual bool isHostile(){return true;}
+
     virtual bool triggersActiveLandmines() const {return true;}
     virtual void dieByFallOrBurnIfAppropriate();
     
     virtual Direction chooseDirection();
 private:
     int m_movePlan;
-    bool m_paralyzed;
     int m_score;
     bool vomitIfTarget();
 };

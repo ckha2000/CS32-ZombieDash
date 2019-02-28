@@ -5,6 +5,30 @@
 
 
 //////////////
+//////////////          Agent
+
+// calculates the move destination for a citizen for a given Direction
+void Agent::determineMoveDest(Direction d, double& destX, double& destY){
+    destX = getX();
+    destY = getY();
+    
+    switch(d){
+        case up:
+            destY += m_moveSpeed;
+            break;
+        case down:
+            destY -= m_moveSpeed;
+            break;
+        case left:
+            destX -= m_moveSpeed;
+            break;
+        case right:
+            destX += m_moveSpeed;
+            break;
+    }
+}
+
+//////////////
 //////////////          Person
 
 void Person::beVomitedOnIfAppropriate(){
@@ -153,21 +177,131 @@ void Citizen::doSomething(){
     if(incrementInfection())    // return immediately if dead after incrementing infection
         return;
     
-    if(m_paralyzed){            // paralyzed every other tic
-        m_paralyzed = false;
+    if(getParalyzed()){            // paralyzed every other tic
+        setParalyzed(false);
         return;
     }else
-        m_paralyzed = true;
+        setParalyzed(true);
     
-    double dist_p = getWorld()->distToPenelope(getX(), getY());
-    double dist_z = getWorld()->distToNearestZombie(getX(), getY());
+    double triggerX, triggerY, triggerDist;
+    triggerX = triggerY = triggerDist = 0.0;
+    bool isThreat;
     
-    if(dist_p < dist_z && dist_p <= 80){
-         getWorld()->moveToPenelope(this);                             // parameters: (pointer to citizen?)
+    // if true, it means that no trigger is within 80 units or there are no Triggers in the level so do nothing
+    if(!getWorld()->locateNearestCitizenTrigger(getX(), getY(), triggerX, triggerY, triggerDist, isThreat) || triggerDist > 80)
+        return;
+    
+    // the closest trigger is Penelope
+    if(!isThreat){
+        Direction vertical = -1;
+        Direction horizontal = -1;
+        
+        // find the two Directions that the Citizen could move to in order to get closer to Penelope
+        if(triggerX > getX()){
+            horizontal = right;
+        }else if(triggerX < getX()){
+            horizontal = left;
+        }
+        if(triggerY > getY()){
+            vertical = up;
+        }else if(triggerY < getY()){
+            vertical = down;
+        }
+        
+        Direction d;
+        double destX, destY;
+        if(tryDirections(vertical, horizontal, d, destX, destY)){       // tries both directions
+            setDirection(d);                    // if movement is valid, moves and returns immediately
+            moveTo(destX, destY);
+            return;
+        }
     }
-    if(dist_z <= 80){
-//       avoidZombie();
+    
+    // if true, there are no threats in the level or within 80 units so do nothing
+    if(!getWorld()->locateNearestCitizenThreat(getX(), getY(), triggerX, triggerY, triggerDist) || triggerDist > 80){
+        return;
     }
+
+    double farthestDist = triggerDist;
+    double tempDist = 0.0;
+    Direction safestDir = -1;
+    
+    double destX, destY, threatX, threatY;
+    
+    // up
+    determineMoveDest(up, destX, destY);
+    if(getWorld()->validDestination(destX, destY, this)){
+        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
+        if(tempDist > farthestDist){
+            farthestDist = tempDist;
+            safestDir = up;
+        }
+    }
+    // down
+    if(getWorld()->validDestination(destX, destY, this)){
+        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
+        if(tempDist > farthestDist){
+            farthestDist = tempDist;
+            safestDir = up;
+        }
+    }
+    // left
+    if(getWorld()->validDestination(destX, destY, this)){
+        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
+        if(tempDist > farthestDist){
+            farthestDist = tempDist;
+            safestDir = up;
+        }
+    }
+    // right
+    if(getWorld()->validDestination(destX, destY, this)){
+        getWorld()->locateNearestCitizenThreat(destX, destY, threatX, threatY, tempDist);
+        if(tempDist > farthestDist){
+            farthestDist = tempDist;
+            safestDir = up;
+        }
+    }
+
+}
+
+// given two possible directions, select one randomly and see
+// if movement is possible is possible in that Direction
+// if not, try the other Direction
+    // if either Direction works, set df that that direction, caluculate destX and destY, and return true
+// if both Directions don't work, return false and leave variables unchanged
+bool Citizen::tryDirections(Direction v, Direction h, Direction& df, double& destX, double& destY){
+    Direction first;
+    Direction second;
+    
+    if(randInt(0,1)){   // decide order of trying Directions
+        first = v;
+        second = h;
+    }else{
+        first = h;
+        second = v;
+    }
+    
+    double tempX, tempY;
+    
+    if(first != -1){
+        determineMoveDest(first, tempX, tempY);
+        if(getWorld()->validDestination(tempX, tempY, this)){
+            df = first;
+            destX = tempX;
+            destY = tempY;
+            return true;
+        }
+    }
+    if(second != -1){
+        determineMoveDest(second, tempX, tempY);
+        if(getWorld()->validDestination(tempX, tempY, this)){
+            df = second;
+            destX = tempX;
+            destY = tempY;
+            return true;
+        }
+    }
+    return false;   // neither direction results in valid movement
 }
 
 void Citizen::useExitIfAppropriate(){
@@ -182,9 +316,9 @@ void Citizen::dieByInfection(){
     
     getWorld()->playSound(SOUND_ZOMBIE_BORN);
     int rand = randInt(0, 9);
-    if(rand <= 2){
+    if(rand <= 2){              // there is a 30% chance of generating a smart zombie (0 - 2)
         getWorld()->addActor(new SmartZombie(getX(), getY(), getWorld()));
-    }else{
+    }else{                      // else, (3 - 9) a DumbZombie is generated instead
         getWorld()->addActor(new DumbZombie(getX(), getY(), getWorld()));
     }
 }
@@ -195,6 +329,14 @@ void Citizen::dieByFallOrBurnIfAppropriate(){
     getWorld()->playSound(SOUND_CITIZEN_DIE);
 }
 
+void Citizen::beVomitedOnIfAppropriate(){
+    if(!isInfected()){
+        getWorld()->playSound(SOUND_CITIZEN_INFECTED);
+        Person::beVomitedOnIfAppropriate();
+    }
+}
+
+
 //////////////
 //////////////      Zombie
 
@@ -203,11 +345,11 @@ void Zombie::doSomething(){
         return;
     }
     
-    if(m_paralyzed){            // paralyzed every other tic
-        m_paralyzed = false;
+    if(getParalyzed()){            // paralyzed every other tic
+        setParalyzed(false);
         return;
     }else
-        m_paralyzed = true;
+        setParalyzed(true);
     
     if(vomitIfTarget())
         return;
@@ -217,21 +359,8 @@ void Zombie::doSomething(){
         setDirection(chooseDirection());   // DumbZombie and SmartZombie only
     }                                       // differ in the direction of their movePlan
     
-    double destX = getX();
-    double destY = getY();
-    switch (getDirection()) {
-        case right:
-            destX += 1;
-            break;
-        case left:
-            destX -= 1;
-            break;
-        case up:
-            destY += 1;
-            break;
-        case down:
-            destY -= 1;
-    }
+    double destX, destY;
+    determineMoveDest(getDirection(), destX, destY);
     
     if(getWorld()->validDestination(destX, destY, this)){
         moveTo(destX, destY);
@@ -270,7 +399,6 @@ bool Zombie::vomitIfTarget(){
         getWorld()->addActor(new Vomit(tarX, tarY, getWorld(), getDirection()));
         return true;
     }
-    
     return false;
 }
 
@@ -309,7 +437,7 @@ void DumbZombie::throwVaccine(){
             break;
     }
     
-    if(getWorld()->validDestination(tarX, tarY, nullptr)){
+    if(getWorld()->isEmptyLocation(tarX, tarY)){
         getWorld()->addActor(new VaccineGoodie(tarX, tarY, getWorld()));
     }
 }
@@ -333,9 +461,8 @@ Direction Zombie::chooseDirection(){
 }
 
 Direction SmartZombie::chooseDirection(){
-    double x = 0;
-    double y = 0;
-    double d = 0;
+    double x , y, d;
+    x = y = d = 0.0;
     
     if(!getWorld()->locateNearestVomitTrigger(getX(), getY(), x, y, d)){    // if no targets in range
         return Zombie::chooseDirection();                                       // choose a random Direction
@@ -463,5 +590,3 @@ void Goodie::pickup(Penelope* p){
 void Goodie::dieByFallOrBurnIfAppropriate(){
     setIsAlive(false);
 }
-
-
