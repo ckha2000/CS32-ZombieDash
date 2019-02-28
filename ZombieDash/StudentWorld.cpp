@@ -16,13 +16,9 @@ GameWorld* createStudentWorld(string assetPath)
 // Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-: GameWorld(assetPath), m_level(assetPath)
-{}
+: GameWorld(assetPath), m_level(assetPath) {}
 
-StudentWorld::~StudentWorld()
-{
-    cleanUp();
-}
+StudentWorld::~StudentWorld() {cleanUp();}
 
 int StudentWorld::init()
 {
@@ -33,11 +29,11 @@ int StudentWorld::init()
     s << ".txt";
     string levelTxt = s.str();
     
-    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
+//    Level::LoadResult lev = m_level.loadLevel(levelTxt);              // REMEMBER TO UNCOMMENT THIS
     
     
     ////////////////////////////////
-//    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
+    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
     
     if(getLevel() >= 99 || lev == Level::load_fail_file_not_found){
         return GWSTATUS_PLAYER_WON;
@@ -161,7 +157,6 @@ void StudentWorld::updateDisplayMessage(){
     setGameStatText(msg.str());
 }
 
-
 // returns whether Actor a can move to the position (destX, destY)
 bool StudentWorld::validDestination(double destX, double destY, Actor* a){
     if(m_penelope != a){                                       // "a" is the actor that is moving
@@ -234,7 +229,7 @@ void StudentWorld::activateOnAppropriateActors(Actor *a){
 // returns whether there are still alive Citizens in the level
 bool StudentWorld::citizensLeft(){
     for(int i = 0 ; i < m_actors.size(); i++){
-        if(m_actors[i]->isInfectable())
+        if(m_actors[i]->getIsAlive() && m_actors[i]->isInfectable())
             return false;
     }
     return true;
@@ -258,38 +253,6 @@ bool StudentWorld::isOverlapping(Actor* a, Actor* b) const{
 // Overloaded version for Zombies
 bool StudentWorld::isOverlapping(Actor *a, double x, double y) const{
     return (calcDist(a->getX(), a->getY(), x, y) <= 10);
-}
-
-
-
-
-void StudentWorld::moveToPenelope(Actor* a){
-    double citX = a->getX();
-    double citY = a->getY();
-    double pX = m_penelope->getX();
-    double pY = m_penelope->getY();
-    
-    if(citY == pY){
-        if(citX > pX){              // move left
-            if(validDestination(citX-2, citY, a)){
-                a->moveTo(citX-2, citY);
-            }
-        }else if (citX < pX){       // move right
-            if(validDestination(citX+2, citY, a)){
-                a->moveTo(citX+2, citY);
-            }
-        }
-    }else if(citX == pX){
-        if(citY > pY){              // move down
-            if(validDestination(citX, citY-2, a)){
-                a->moveTo(citX, citY-2);
-            }
-        }else if (citY < pY){       // move up
-            if(validDestination(citX, citY+2, a)){
-                a->moveTo(citX, citY+2);
-            }
-        }
-    }
 }
 
     //Zombies
@@ -345,7 +308,7 @@ bool StudentWorld::locateNearestVomitTrigger(double x, double y, double& otherX,
 // else returns false and the referenced variables are unchanged
 bool StudentWorld::locateNearestCitizenTrigger(double x, double y, double& otherX, double& otherY, double& distance, bool& isThreat) const{
     
-    double penelopeDist = 100000;
+    double penelopeDist = 100000;           // arbitrary large number - placeholder
     
     if(m_penelope != nullptr)
         penelopeDist = calcDist(x, y, m_penelope->getX(), m_penelope->getY());
@@ -403,6 +366,5 @@ bool StudentWorld::locateNearestCitizenThreat(double x, double y, double& otherX
         
         return true;
     }
-    
     return false;               // if false, there are no Zombies left in the Level
 }
