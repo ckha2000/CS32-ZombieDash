@@ -153,8 +153,7 @@ void Penelope::useExitIfAppropriate(){
 }
 
 void Penelope::dieByInfection(){
-    setIsAlive(false);
-    getWorld()->playSound(SOUND_PLAYER_DIE);
+    dieByFallOrBurnIfAppropriate();
 }
 
 void Penelope::pickUpGoodieIfAppropriate(Goodie* g){
@@ -274,6 +273,7 @@ void Citizen::doSomething(){
     
     // safestDir should give us the direction that has the greatest distance from
     determineMoveDest(safestDir, destX, destY);
+    setDirection(safestDir);
     moveTo(destX, destY);
 }
 

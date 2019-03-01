@@ -29,7 +29,7 @@ int StudentWorld::init()
     s << ".txt";
     string levelTxt = s.str();
     
-    Level::LoadResult lev = m_level.loadLevel(levelTxt);              
+    Level::LoadResult lev = m_level.loadLevel(levelTxt);
     
     ////////////////////////////////
 //    Level::LoadResult lev = m_level.loadLevel("level06.txt");         // for testing
@@ -100,10 +100,10 @@ int StudentWorld::move()
     m_penelope->doSomething();              // Penelope moves first
     
     for(int i = 0; i < m_actors.size(); i++){ // the rest of the Actors move
+        m_actors[i]->doSomething();
+        
         if(!m_penelope->getIsAlive())       // if Penelope dies at any point, let world know
             return GWSTATUS_PLAYER_DIED;
-
-        m_actors[i]->doSomething();
         
         if(m_penelope->hasExited())         // if Penelope completes the level at any point, let world know
             return GWSTATUS_FINISHED_LEVEL;
@@ -125,14 +125,14 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+    if(m_penelope != nullptr){
+        delete m_penelope;
+        m_penelope = nullptr;
+    }
     vector<Actor*>::iterator it = m_actors.begin();
     while(it != m_actors.end()){
         delete (*it);
         it = m_actors.erase(it);
-    }
-    if(m_penelope != nullptr){
-        delete m_penelope;
-        m_penelope = nullptr;
     }
 }
 

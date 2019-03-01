@@ -100,6 +100,8 @@ public:
     virtual void beVomitedOnIfAppropriate();
     virtual void useExitIfAppropriate();
     virtual void dieByFallOrBurnIfAppropriate();
+    
+protected:
     virtual void dieByInfection();
 
 private:
@@ -130,10 +132,11 @@ public:
     void addVaccines(int charges){m_nVaccines += charges;}
     
     // overrides
-    virtual bool picksUpGoodies() const {return true;}
     virtual void pickUpGoodieIfAppropriate(Goodie* g);
     virtual void useExitIfAppropriate();
     virtual void dieByFallOrBurnIfAppropriate();
+    
+protected:
     virtual void dieByInfection();
     
 private:
@@ -256,7 +259,6 @@ public:
     :Activator(imageID, startX, startY, w, d, 0), m_liveTics(2){}
     
     virtual void doSomething();
-    virtual void activateIfAppropriate(Actor* a) = 0;
     
 private:
     int m_liveTics;
@@ -288,7 +290,7 @@ public:
     :Activator(imageID, startX, startY, w, right, 1){}
     
     virtual void activateIfAppropriate(Actor* a);
-    virtual void pickup(Penelope* p);
+    void pickup(Penelope* p);
     virtual void incrementSupply(Penelope *p) = 0;
     
     virtual void dieByFallOrBurnIfAppropriate();
